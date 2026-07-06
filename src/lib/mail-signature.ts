@@ -1,3 +1,5 @@
+import path from "path";
+
 export type MailSignatureConfig = {
   companyName: string;
   tagline: string;
@@ -10,6 +12,13 @@ export type MailSignatureConfig = {
   signatureImageUrl: string;
   signatureImageWidth: number;
 };
+
+export const SIGNATURE_CID = "genua-signature@genuadigital.com";
+export const SIGNATURE_IMAGE_PATH = "public/email/genua-signature.png";
+
+export function getSignatureImagePath(): string {
+  return path.join(process.cwd(), SIGNATURE_IMAGE_PATH);
+}
 
 function getDefaultSignatureImageUrl(): string {
   const custom = process.env.TITAN_MAIL_SIGNATURE_IMAGE_URL?.trim();
@@ -71,20 +80,24 @@ export function buildSignatureText(config: MailSignatureConfig = readConfig()): 
   return lines.filter(Boolean).join("\n");
 }
 
-export function buildSignatureHtml(config: MailSignatureConfig = readConfig()): string {
+export function buildSignatureHtml(
+  config: MailSignatureConfig = readConfig(),
+  options?: { embedded?: boolean }
+): string {
   const custom = process.env.TITAN_MAIL_SIGNATURE_HTML?.trim();
   if (custom) {
     return custom;
   }
 
   const alt = `${config.signerName ?? config.companyName} · ${config.tagline}`;
+  const src = options?.embedded ? `cid:${SIGNATURE_CID}` : escapeHtml(config.signatureImageUrl);
 
   return `<table cellpadding="0" cellspacing="0" role="presentation" style="margin-top:24px;font-family:Arial,Helvetica,sans-serif;">
   <tr>
     <td style="padding:0;">
       <a href="${escapeHtml(config.website)}" style="text-decoration:none;display:inline-block;">
         <img
-          src="${escapeHtml(config.signatureImageUrl)}"
+          src="${src}"
           alt="${escapeHtml(alt)}"
           width="${config.signatureImageWidth}"
           style="display:block;border:0;outline:none;max-width:${config.signatureImageWidth}px;width:100%;height:auto;"
@@ -111,9 +124,13 @@ export function appendSignatureText(body: string, config?: MailSignatureConfig):
   return `${trimmed}\n\n${buildSignatureText(config)}`;
 }
 
-export function appendSignatureHtml(bodyHtml: string, config?: MailSignatureConfig): string {
+export function appendSignatureHtml(
+  bodyHtml: string,
+  config?: MailSignatureConfig,
+  options?: { embedded?: boolean }
+): string {
   if (hasSignature(bodyHtml)) return bodyHtml;
-  return `${bodyHtml}${buildSignatureHtml(config)}`;
+  return `${bodyHtml}${buildSignatureHtml(config, options)}`;
 }
 
 export function getSignaturePreview() {

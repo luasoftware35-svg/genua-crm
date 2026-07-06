@@ -20,6 +20,6 @@ export async function GET() {
     from: config.from,
     fromName: config.fromName,
     signatureText: signature.text,
-    signatureLogoUrl: signature.logoUrl,
+    signatureLogoUrl: "/email/genua-signature.png",
   });
 }

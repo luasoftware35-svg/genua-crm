@@ -79,14 +79,16 @@ export async function POST(request: Request) {
     try {
       const text = appendSignatureText(msg.text.trim());
       const html = msg.html
-        ? appendSignatureHtml(msg.html)
+        ? appendSignatureHtml(msg.html, undefined, { embedded: true })
         : appendSignatureHtml(
             `<div style="white-space:pre-line;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#374151;line-height:1.6;">${msg.text
               .trim()
               .replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;")
-              .replace(/\n/g, "<br/>")}</div>`
+              .replace(/\n/g, "<br/>")}</div>`,
+            undefined,
+            { embedded: true }
           );
 
       await sendTitanMail({
