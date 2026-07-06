@@ -5,30 +5,39 @@ export type MailSignatureConfig = {
   website: string;
   websiteLabel: string;
   phone?: string;
+  address?: string;
   signerName?: string;
-  logoUrl?: string;
-  logoWidth: number;
+  signatureImageUrl: string;
+  signatureImageWidth: number;
 };
 
-const DEFAULT_LOGO =
-  "https://genuadigital.com/varl%C4%B1klar/resimler/genua-logo.png";
+function getDefaultSignatureImageUrl(): string {
+  const custom = process.env.TITAN_MAIL_SIGNATURE_IMAGE_URL?.trim();
+  if (custom) return custom;
+
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://genua-crm.vercel.app";
+  return `${site.replace(/\/$/, "")}/email/genua-signature.png`;
+}
 
 function readConfig(): MailSignatureConfig {
   const website = process.env.TITAN_MAIL_WEBSITE ?? "https://www.genuadigital.com";
   const email = process.env.TITAN_MAIL_FROM ?? "hello@genuadigital.com";
-  const logoUrl = process.env.TITAN_MAIL_SIGNATURE_IMAGE_URL?.trim() || DEFAULT_LOGO;
-  const logoWidth = Number(process.env.TITAN_MAIL_SIGNATURE_IMAGE_WIDTH ?? "140") || 140;
+  const signatureImageWidth =
+    Number(process.env.TITAN_MAIL_SIGNATURE_IMAGE_WIDTH ?? "560") || 560;
 
   return {
     companyName: process.env.TITAN_MAIL_FROM_NAME ?? "Genua Digital",
-    tagline: process.env.TITAN_MAIL_SIGNER_TITLE ?? "Dijital Medya & Web Çözümleri",
+    tagline: process.env.TITAN_MAIL_SIGNER_TITLE ?? "Genua Digital Media - Founder",
     email,
     website,
     websiteLabel: website.replace(/^https?:\/\//, "").replace(/\/$/, ""),
-    phone: process.env.TITAN_MAIL_SIGNER_PHONE?.trim() || undefined,
-    signerName: process.env.TITAN_MAIL_SIGNER_NAME?.trim() || undefined,
-    logoUrl,
-    logoWidth,
+    phone: process.env.TITAN_MAIL_SIGNER_PHONE?.trim() || "0551 124 53 06",
+    address:
+      process.env.TITAN_MAIL_SIGNER_ADDRESS?.trim() ||
+      "Yeni, Menderes Blv. No: 7A D:3, 20030 Denizli",
+    signerName: process.env.TITAN_MAIL_SIGNER_NAME?.trim() || "Umut Avcı",
+    signatureImageUrl: getDefaultSignatureImageUrl(),
+    signatureImageWidth,
   };
 }
 
@@ -48,57 +57,18 @@ export function buildSignatureText(config: MailSignatureConfig = readConfig()): 
 
   const lines = [
     "--",
-    config.signerName ? config.signerName : config.companyName,
+    config.signerName ?? config.companyName,
     config.tagline,
-    `${config.websiteLabel} | ${config.email}`,
+    `İletişim: ${config.phone ?? ""}`,
+    config.websiteLabel,
+    config.email,
   ];
 
-  if (config.phone) {
-    lines.push(config.phone);
+  if (config.address) {
+    lines.push(`Adres: ${config.address}`);
   }
 
-  return lines.join("\n");
-}
-
-function buildLogoCell(config: MailSignatureConfig): string {
-  if (!config.logoUrl) return "";
-
-  return `<td style="padding:0 16px 0 0;vertical-align:top;width:${config.logoWidth}px;">
-  <a href="${escapeHtml(config.website)}" style="text-decoration:none;">
-    <img
-      src="${escapeHtml(config.logoUrl)}"
-      alt="${escapeHtml(config.companyName)}"
-      width="${config.logoWidth}"
-      style="display:block;border:0;outline:none;max-width:${config.logoWidth}px;height:auto;"
-    />
-  </a>
-</td>`;
-}
-
-function buildTextCell(config: MailSignatureConfig): string {
-  const nameLine = config.signerName
-    ? `<p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#111827;line-height:1.4;">${escapeHtml(config.signerName)}</p>
-<p style="margin:0 0 6px;font-size:13px;color:#6b7280;line-height:1.4;">${escapeHtml(config.companyName)} · ${escapeHtml(config.tagline)}</p>`
-    : `<p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#111827;line-height:1.4;">${escapeHtml(config.companyName)}</p>
-<p style="margin:0 0 6px;font-size:13px;color:#6b7280;line-height:1.4;">${escapeHtml(config.tagline)}</p>`;
-
-  const contactLine = `<a href="${escapeHtml(config.website)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(config.websiteLabel)}</a>
-<span style="color:#9ca3af;"> · </span>
-<a href="mailto:${escapeHtml(config.email)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(config.email)}</a>`;
-
-  const phoneLine = config.phone
-    ? `<p style="margin:6px 0 0;font-size:13px;color:#374151;line-height:1.4;">${escapeHtml(config.phone)}</p>`
-    : "";
-
-  const borderStyle = config.logoUrl
-    ? "border-left:1px solid #e5e7eb;padding-left:16px;"
-    : "";
-
-  return `<td style="padding:0;vertical-align:top;${borderStyle}">
-  ${nameLine}
-  <p style="margin:0;font-size:13px;line-height:1.5;color:#374151;">${contactLine}</p>
-  ${phoneLine}
-</td>`;
+  return lines.filter(Boolean).join("\n");
 }
 
 export function buildSignatureHtml(config: MailSignatureConfig = readConfig()): string {
@@ -107,10 +77,20 @@ export function buildSignatureHtml(config: MailSignatureConfig = readConfig()): 
     return custom;
   }
 
-  return `<table cellpadding="0" cellspacing="0" role="presentation" style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-family:Arial,Helvetica,sans-serif;">
+  const alt = `${config.signerName ?? config.companyName} · ${config.tagline}`;
+
+  return `<table cellpadding="0" cellspacing="0" role="presentation" style="margin-top:24px;font-family:Arial,Helvetica,sans-serif;">
   <tr>
-    ${buildLogoCell(config)}
-    ${buildTextCell(config)}
+    <td style="padding:0;">
+      <a href="${escapeHtml(config.website)}" style="text-decoration:none;display:inline-block;">
+        <img
+          src="${escapeHtml(config.signatureImageUrl)}"
+          alt="${escapeHtml(alt)}"
+          width="${config.signatureImageWidth}"
+          style="display:block;border:0;outline:none;max-width:${config.signatureImageWidth}px;width:100%;height:auto;"
+        />
+      </a>
+    </td>
   </tr>
 </table>`;
 }
@@ -118,7 +98,11 @@ export function buildSignatureHtml(config: MailSignatureConfig = readConfig()): 
 const SIGNATURE_MARKER = "genuadigital.com";
 
 export function hasSignature(content: string): boolean {
-  return content.toLowerCase().includes(SIGNATURE_MARKER);
+  return (
+    content.toLowerCase().includes(SIGNATURE_MARKER) ||
+    content.includes("genua-signature.png") ||
+    content.includes("Umut Avcı")
+  );
 }
 
 export function appendSignatureText(body: string, config?: MailSignatureConfig): string {
@@ -137,6 +121,6 @@ export function getSignaturePreview() {
   return {
     text: buildSignatureText(config),
     html: buildSignatureHtml(config),
-    logoUrl: config.logoUrl ?? null,
+    logoUrl: config.signatureImageUrl,
   };
 }

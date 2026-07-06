@@ -266,21 +266,19 @@ export function BulkMailDialog({
           {(signatureText || signatureLogoUrl) && (
             <div className="space-y-2">
               <Label>E-posta imzası (otomatik eklenir)</Label>
-              <div className="rounded-lg border bg-muted/40 p-4">
-                <div className="flex items-start gap-4">
-                  {signatureLogoUrl && (
-                    <img
-                      src={signatureLogoUrl}
-                      alt="Genua Digital"
-                      className="h-14 w-auto max-w-[140px] object-contain"
-                    />
-                  )}
-                  {signatureText && (
-                    <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-sans">
-                      {signatureText.replace(/^--\n/, "")}
-                    </pre>
-                  )}
-                </div>
+              <div className="rounded-lg border bg-white p-3">
+                {signatureLogoUrl && (
+                  <img
+                    src={signatureLogoUrl}
+                    alt="Genua mail imzası"
+                    className="w-full max-w-xl object-contain"
+                  />
+                )}
+                {!signatureLogoUrl && signatureText && (
+                  <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-sans">
+                    {signatureText.replace(/^--\n/, "")}
+                  </pre>
+                )}
               </div>
             </div>
           )}

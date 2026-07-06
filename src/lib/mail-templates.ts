@@ -75,11 +75,14 @@ export function buildOutreachMail(input: MailTemplateInput) {
 export function getDefaultSignatureText(): string {
   return buildSignatureText({
     companyName: "Genua Digital",
-    tagline: "Dijital Medya & Web Çözümleri",
+    tagline: "Genua Digital Media - Founder",
     email: "hello@genuadigital.com",
     website: "https://www.genuadigital.com",
-    websiteLabel: "www.genuadigital.com",
-    logoUrl: "https://genuadigital.com/varl%C4%B1klar/resimler/genua-logo.png",
-    logoWidth: 140,
+    websiteLabel: "genuadigital.com",
+    phone: "0551 124 53 06",
+    address: "Yeni, Menderes Blv. No: 7A D:3, 20030 Denizli",
+    signerName: "Umut Avcı",
+    signatureImageUrl: "/email/genua-signature.png",
+    signatureImageWidth: 560,
   });
 }
