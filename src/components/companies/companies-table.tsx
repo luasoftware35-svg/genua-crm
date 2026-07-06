@@ -30,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AddCompanyDialog } from "@/components/companies/add-company-dialog";
+import { BulkMailDialog, useBulkMailTargets } from "@/components/companies/bulk-mail-dialog";
 import { CsvImportDialog } from "@/components/companies/csv-import-dialog";
 import { DataManagementDialog } from "@/components/companies/data-management-dialog";
 import { PdfImportDialog } from "@/components/companies/pdf-import-dialog";
@@ -48,6 +49,8 @@ export function CompaniesTable() {
   const {
     getCompaniesWithDeals,
     getCities,
+    getCompanyById,
+    getContactsByCompanyId,
     bulkDeleteCompanies,
     bulkMarkMailSent,
   } = useCrm();
@@ -61,6 +64,7 @@ export function CompaniesTable() {
   const [sectorFilter, setSectorFilter] = useState(ALL);
   const [auditFilter, setAuditFilter] = useState(ALL);
   const [stageFilter, setStageFilter] = useState(ALL);
+  const [mailOpen, setMailOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const sectors = useMemo(() => {
@@ -127,6 +131,7 @@ export function CompaniesTable() {
   };
 
   const selectedIds = Array.from(selected);
+  const mailTargets = useBulkMailTargets(selectedIds, getCompanyById, getContactsByCompanyId);
 
   const handleExport = (scope: "all" | "selected" | "filtered") => {
     let rows = companies;
@@ -145,9 +150,9 @@ export function CompaniesTable() {
     setSelected(new Set());
   };
 
-  const handleBulkMail = async () => {
+  const handleBulkMailMark = async () => {
     if (!selectedIds.length) return;
-    await bulkMarkMailSent(selectedIds);
+    await bulkMarkMailSent(selectedIds, "Manuel olarak mail atıldı işaretlendi.");
     setSelected(new Set());
     alert(`${selectedIds.length} firma "Mail Atıldı" olarak işaretlendi.`);
   };
@@ -247,8 +252,11 @@ export function CompaniesTable() {
       {selectedIds.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3">
           <Badge variant="secondary">{selectedIds.length} seçili</Badge>
-          <Button size="sm" variant="outline" onClick={handleBulkMail}>
+          <Button size="sm" onClick={() => setMailOpen(true)}>
             <Mail className="mr-2 h-4 w-4" />
+            Titan ile Gönder
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleBulkMailMark}>
             Mail Atıldı İşaretle
           </Button>
           <Button size="sm" variant="outline" onClick={() => handleExport("selected")}>
@@ -359,6 +367,13 @@ export function CompaniesTable() {
           {filtered.length} / {companies.length} firma listeleniyor
         </p>
       )}
+
+      <BulkMailDialog
+        open={mailOpen}
+        onOpenChange={setMailOpen}
+        targets={mailTargets}
+        onComplete={() => setSelected(new Set())}
+      />
     </div>
   );
 }

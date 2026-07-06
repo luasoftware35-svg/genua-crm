@@ -104,7 +104,7 @@ type CrmContextValue = {
   rescheduleFollowUp: (dealId: string, days: number) => void;
   clearAllData: () => Promise<void>;
   bulkDeleteCompanies: (ids: string[]) => Promise<void>;
-  bulkMarkMailSent: (companyIds: string[]) => Promise<void>;
+  bulkMarkMailSent: (companyIds: string[], note?: string) => Promise<void>;
   refreshData: () => Promise<void>;
 };
 
@@ -526,7 +526,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   );
 
   const bulkMarkMailSent = useCallback(
-    async (companyIds: string[]) => {
+    async (companyIds: string[], note = "Titan Mail ile gönderildi.") => {
       const dealIds = deals
         .filter((d) => companyIds.includes(d.company_id))
         .map((d) => d.id);
@@ -545,7 +545,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
           company_id: companyId,
           deal_id: deal?.id ?? null,
           type: "mail",
-          note: "Toplu işaretlendi (Titan Mail entegrasyonu sonraki adım).",
+          note,
         });
       }
     },

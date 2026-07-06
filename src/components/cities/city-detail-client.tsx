@@ -18,12 +18,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PdfImportDialog, type PdfImportResult } from "@/components/companies/pdf-import-dialog";
+import { BulkMailDialog, useBulkMailTargets } from "@/components/companies/bulk-mail-dialog";
 import { getAuditStatusColor, getAuditStatusLabel, getStageLabel } from "@/lib/constants";
 import { useCrm } from "@/context/crm-context";
 
 export function CityDetailClient({ slug }: { slug: string }) {
   const router = useRouter();
-  const { getCities, getCompaniesByCity, getCityContacts, getContactsByCompanyId, updateDeal, createActivity } =
+  const { getCities, getCompaniesByCity, getCityContacts, getContactsByCompanyId, getCompanyById, updateDeal, createActivity } =
     useCrm();
   const cityName = getCities().find((c) => c.slug === slug)?.name;
   if (!cityName) notFound();
@@ -32,6 +33,8 @@ export function CityDetailClient({ slug }: { slug: string }) {
   const allContacts = getCityContacts(cityName);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [importMsg, setImportMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [mailOpen, setMailOpen] = useState(false);
+  const mailTargets = useBulkMailTargets(Array.from(selected), getCompanyById, getContactsByCompanyId);
 
   const handlePdfImported = (result: PdfImportResult) => {
     const parts: string[] = [];
@@ -80,7 +83,7 @@ export function CityDetailClient({ slug }: { slug: string }) {
         note: "Denetim raporu gönderildi (panel üzerinden toplu işlem).",
       });
     }
-    alert(`${selected.size} firmaya rapor gönderildi olarak işaretlendi. Titan bağlantısı sonraki adım.`);
+    alert(`${selected.size} firmaya rapor gönderildi olarak işaretlendi.`);
     setSelected(new Set());
   };
 
@@ -130,8 +133,7 @@ export function CityDetailClient({ slug }: { slug: string }) {
         <CardHeader>
           <CardTitle>Firma Yükle & Toplu Gönderim</CardTitle>
           <CardDescription>
-            PDF seç → firmalar otomatik panele eklenir. Listeden seç → rapor veya mail gönder.
-            Titan Mail sonraki adımda bağlanacak.
+            PDF seç → firmalar otomatik panele eklenir. Listeden seç → Titan Mail ile toplu gönderim.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -149,7 +151,11 @@ export function CityDetailClient({ slug }: { slug: string }) {
               <FileText className="mr-2 h-4 w-4" />
               Rapor Gönderildi İşaretle ({selected.size})
             </Button>
-            <Button variant="outline" disabled title="Titan Mail bağlantısı sonraki adım">
+            <Button
+              variant="outline"
+              disabled={selected.size === 0}
+              onClick={() => setMailOpen(true)}
+            >
               <Mail className="mr-2 h-4 w-4" />
               Toplu Mail Gönder (Titan)
             </Button>
@@ -278,6 +284,13 @@ export function CityDetailClient({ slug }: { slug: string }) {
           </Table>
         </div>
       </div>
+
+      <BulkMailDialog
+        open={mailOpen}
+        onOpenChange={setMailOpen}
+        targets={mailTargets}
+        onComplete={() => setSelected(new Set())}
+      />
     </div>
   );
 }

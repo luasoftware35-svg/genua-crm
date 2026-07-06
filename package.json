@@ -11,6 +11,7 @@
     "lint": "next lint",
     "bootstrap:auth": "node scripts/bootstrap-auth.mjs",
     "configure:auth-urls": "node scripts/configure-auth-urls.mjs",
+    "test:titan-mail": "node scripts/test-titan-mail.mjs",
     "seed:pdf": "npx tsx scripts/seed-pdf.ts"
   },
   "dependencies": {
@@ -33,6 +34,7 @@
     "date-fns": "^4.4.0",
     "lucide-react": "^1.23.0",
     "next": "14.2.35",
+    "nodemailer": "^9.0.3",
     "papaparse": "^5.5.4",
     "pdfjs-dist": "^6.1.200",
     "react": "^18",
@@ -43,6 +45,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^18",
     "@types/react-dom": "^18",

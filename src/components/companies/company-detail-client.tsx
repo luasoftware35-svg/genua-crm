@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, FileText, Mail, MapPin, Phone, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, ExternalLink, FileText, Mail, MapPin, Phone, Send, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivitySection } from "@/components/companies/activity-section";
 import { AuditForm } from "@/components/companies/audit-form";
+import { BulkMailDialog, useBulkMailTargets } from "@/components/companies/bulk-mail-dialog";
 import { SiteAuditButton } from "@/components/companies/site-audit-button";
 import { CompanyForm } from "@/components/companies/company-form";
 import { ContactsSection } from "@/components/companies/contacts-section";
@@ -17,12 +19,15 @@ import { cityToSlug } from "@/lib/cities";
 import { useCrm } from "@/context/crm-context";
 
 export function CompanyDetailClient({ id }: { id: string }) {
-  const { getCompanyById, getDealByCompanyId, deleteCompany } = useCrm();
+  const { getCompanyById, getDealByCompanyId, getContactsByCompanyId, deleteCompany } = useCrm();
+  const [mailOpen, setMailOpen] = useState(false);
   const company = getCompanyById(id);
 
   if (!company) notFound();
 
   const deal = getDealByCompanyId(company.id);
+  const mailTargets = useBulkMailTargets([company.id], getCompanyById, getContactsByCompanyId);
+  const hasRecipient = mailTargets.some((t) => t.to);
 
   return (
     <div className="space-y-6">
@@ -41,6 +46,16 @@ export function CompanyDetailClient({ id }: { id: string }) {
         <Badge className={getAuditStatusColor(company.audit_status)}>
           {getAuditStatusLabel(company.audit_status)}
         </Badge>
+        <Button
+          variant="default"
+          size="sm"
+          disabled={!hasRecipient}
+          title={hasRecipient ? undefined : "Firma veya kişi e-postası gerekli"}
+          onClick={() => setMailOpen(true)}
+        >
+          <Send className="mr-2 h-4 w-4" />
+          Titan Mail Gönder
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -162,6 +177,8 @@ export function CompanyDetailClient({ id }: { id: string }) {
         <ContactsSection companyId={company.id} />
         <ActivitySection companyId={company.id} dealId={deal?.id} />
       </div>
+
+      <BulkMailDialog open={mailOpen} onOpenChange={setMailOpen} targets={mailTargets} />
     </div>
   );
 }

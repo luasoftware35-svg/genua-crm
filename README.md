@@ -30,6 +30,12 @@ http://localhost:3000 → `/login`
 | `SUPABASE_SERVICE_ROLE_KEY` | Bootstrap/seed scriptleri (Vercel'de opsiyonel) |
 | `NEXT_PUBLIC_SITE_URL` | Canlı site adresi (varsayılan: `https://genua-crm.vercel.app`) |
 | `NEXT_PUBLIC_ALLOW_SIGNUP` | `true` ise login sayfasında hesap oluşturma açılır |
+| `TITAN_SMTP_USER` | Titan kurumsal e-posta adresi |
+| `TITAN_SMTP_PASS` | Titan mailbox şifresi |
+| `TITAN_MAIL_FROM` | Gönderen adresi (genelde SMTP user ile aynı) |
+| `TITAN_MAIL_FROM_NAME` | Gönderen adı (varsayılan: Genua Digital) |
+| `TITAN_SMTP_HOST` | `smtp.titan.email` (varsayılan) |
+| `TITAN_SMTP_PORT` | `587` veya `465` |
 
 ## Canlı site
 
@@ -60,7 +66,21 @@ OSB → şehir eşlemesi: BOSB=Bursa, SOSB=Sakarya, DOSB=Denizli
 ```bash
 npm run seed:pdf -- "/path/to/liste.pdf"
 npm run bootstrap:auth
+npm run test:titan-mail -- opsiyonel-alici@firma.com
 ```
+
+## Titan Mail
+
+Titan REST API sunmaz; **SMTP** ile gönderim yapılır (`nodemailer`).
+
+1. Titan panelinde **Third-party email access** açın
+2. **2FA kapalı** olmalı (SMTP için Titan kuralı)
+3. Vercel'e env ekleyin: `TITAN_SMTP_USER`, `TITAN_SMTP_PASS`, `TITAN_MAIL_FROM`
+4. Local test: `npm run test:titan-mail`
+
+Panelden **Titan ile Gönder** → firma adı + denetim bulguları şablona işlenir → pipeline `Mail Atıldı` olur.
+
+SMTP: `smtp.titan.email:587` (STARTTLS) veya `:465` (SSL)
 
 ## Vercel deploy
 
@@ -82,6 +102,8 @@ npm run configure:auth-urls
 
 Redirect URL: `https://genua-crm.vercel.app/auth/callback`
 
+Titan env'leri de Production/Preview'a ekleyin.
+
 ## Sonraki adım
 
-- Titan Mail entegrasyonu (toplu gerçek mail gönderimi)
+- Mail şablonu özelleştirme (HTML, ek dosya)
