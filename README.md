@@ -27,7 +27,15 @@ http://localhost:3000 → `/login`
 |----------|----------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase proje URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Sadece seed/bootstrap scriptleri (git'e koyma) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Bootstrap/seed scriptleri (Vercel'de opsiyonel) |
+| `NEXT_PUBLIC_SITE_URL` | Canlı site adresi (varsayılan: `https://genua-crm.vercel.app`) |
+| `NEXT_PUBLIC_ALLOW_SIGNUP` | `true` ise login sayfasında hesap oluşturma açılır |
+
+## Canlı site
+
+**https://genua-crm.vercel.app**
+
+Giriş: `crm@genuadigital.com` (şifre bootstrap script ile ayarlanır)
 
 ## Özellikler
 
@@ -56,11 +64,23 @@ npm run bootstrap:auth
 
 ## Vercel deploy
 
-1. GitHub repo'yu Vercel'e bağla
-2. Environment Variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Deploy
+Proje: **genua-crm** — https://genua-crm.vercel.app
 
-Redirect URL: Supabase Auth → `https://your-domain.vercel.app/auth/callback`
+Environment Variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (opsiyonel)
+- `NEXT_PUBLIC_SITE_URL` = `https://genua-crm.vercel.app`
+
+Supabase Auth redirect:
+
+```bash
+# Dashboard'dan veya access token ile:
+npm run configure:auth-urls
+```
+
+Redirect URL: `https://genua-crm.vercel.app/auth/callback`
 
 ## Sonraki adım
 

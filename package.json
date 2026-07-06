@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "bootstrap:auth": "node scripts/bootstrap-auth.mjs",
+    "configure:auth-urls": "node scripts/configure-auth-urls.mjs",
     "seed:pdf": "npx tsx scripts/seed-pdf.ts"
   },
   "dependencies": {

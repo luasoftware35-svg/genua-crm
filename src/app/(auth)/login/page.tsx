@@ -1,13 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const allowSignUp = process.env.NEXT_PUBLIC_ALLOW_SIGNUP === "true";
+
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+        <p className="text-sm text-muted-foreground">Yükleniyor...</p>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const authError = searchParams.get("error") === "auth";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
@@ -22,6 +39,11 @@ export default function LoginPage() {
     const supabase = createClient();
 
     if (isSignUp) {
+      if (!allowSignUp) {
+        setError("Yeni hesap oluşturma kapalı. Yöneticinizle iletişime geçin.");
+        setLoading(false);
+        return;
+      }
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -94,23 +116,27 @@ export default function LoginPage() {
                 required
               />
             </div>
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
+            {(error || authError) && (
+              <p className="text-sm text-destructive">
+                {error ?? "Oturum doğrulaması başarısız. Tekrar giriş yapın."}
+              </p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Bekleyin..." : isSignUp ? "Hesap Oluştur" : "Giriş Yap"}
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full text-sm"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError(null);
-              }}
-            >
-              {isSignUp ? "Zaten hesabınız var mı? Giriş yapın" : "İlk kurulum — hesap oluştur"}
-            </Button>
+            {allowSignUp && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-sm"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError(null);
+                }}
+              >
+                {isSignUp ? "Zaten hesabınız var mı? Giriş yapın" : "İlk kurulum — hesap oluştur"}
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>
