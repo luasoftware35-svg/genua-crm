@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Genua CRM
 
-## Getting Started
+Genua Digital Media için satış takip (mini-CRM) uygulaması.
 
-First, run the development server:
+## Teknoloji
+
+- Next.js 14 (App Router)
+- Supabase (Postgres + Auth) — sonraki adım
+- Tailwind CSS + shadcn/ui
+- TypeScript, Recharts, dnd-kit, papaparse
+
+## Kurulum
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+http://localhost:3000 → `/login` yönlendirir. Herhangi bir e-posta/şifre ile giriş yapabilirsiniz.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Özellikler
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Sayfa | Özellikler |
+|-------|-----------|
+| `/dashboard` | KPI kartları, kaynak/pipeline grafikleri, bugün takipler |
+| `/companies` | Arama, filtreler, **CSV import**, **firma ekle**, tıklanabilir tablo |
+| `/companies/[id]` | Firma düzenleme, denetim bulguları, kişi CRUD, aktivite ekleme, deal yönetimi |
+| `/pipeline` | Kanban + **sürükle-bırak** aşama değiştirme |
+| `/follow-ups` | Bugün/bu hafta takipler, +1/+7 gün erteleme, hızlı aşama değiştirme |
+| `/login` | Mock auth (cookie tabanlı, middleware korumalı) |
 
-## Learn More
+## CSV Import
 
-To learn more about Next.js, take a look at the following resources:
+1. `/companies` → **CSV İçe Aktar**
+2. Sütun eşleştirmesini kontrol et (firma adı zorunlu)
+3. Önizle → İçe aktar
+4. Her firma için otomatik `yeni` aşamasında deal oluşturulur
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Desteklenen sütun alias'ları: firma, website, email, telefon, kaynak, sektör vb.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Supabase (sonraki adım)
 
-## Deploy on Vercel
+Migration: `supabase/migrations/20250706120000_initial_schema.sql`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`.env.local.example` dosyasını kopyalayıp URL + anon key girin.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Sonraki adımlar
+
+- Supabase bağlantısı (mock store → gerçek DB)
+- Otomatik site analizi (import sonrası)
+- Titan Mail entegrasyonu (otomatik mail gönderimi)
