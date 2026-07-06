@@ -11,11 +11,23 @@ import {
 } from "react";
 import { addDays, format } from "date-fns";
 import { DEFAULT_CITY, cityToSlug } from "@/lib/cities";
+import type { ImportCompanyInput } from "@/lib/crm-import";
+import { createClient } from "@/lib/supabase/client";
 import {
-  bulkUpsertCompanies,
-  type ImportCompanyInput,
-} from "@/lib/crm-import";
-import { loadCrmState, saveCrmState } from "@/lib/crm-storage";
+  bulkImportCompanies,
+  bulkDeleteCompanies as bulkDeleteCompaniesDb,
+  bulkUpdateDealStage,
+  clearAllCrmData,
+  deleteCompanyRow,
+  fetchCrmData,
+  insertActivity,
+  insertCompany,
+  insertContact,
+  updateCompanyRow,
+  updateContactRow,
+  updateDealRow,
+  deleteContactRow,
+} from "@/lib/supabase/crm-service";
 import type {
   Activity,
   ActivityType,
@@ -25,13 +37,6 @@ import type {
   Deal,
   DealStage,
 } from "@/types";
-
-type CrmState = {
-  companies: Company[];
-  deals: Deal[];
-  contacts: Contact[];
-  activities: Activity[];
-};
 
 type UpdateCompanyInput = Partial<
   Pick<
@@ -65,7 +70,13 @@ type CreateActivityInput = {
 
 type BulkImportResult = { created: number; updated: number };
 
-type CrmContextValue = CrmState & {
+type CrmContextValue = {
+  companies: Company[];
+  deals: Deal[];
+  contacts: Contact[];
+  activities: Activity[];
+  isLoading: boolean;
+  error: string | null;
   getCompanyById: (id: string) => Company | undefined;
   getDealByCompanyId: (companyId: string) => Deal | undefined;
   getContactsByCompanyId: (companyId: string) => Contact[];
@@ -81,9 +92,9 @@ type CrmContextValue = CrmState & {
   updateCompany: (id: string, data: UpdateCompanyInput) => void;
   deleteCompany: (id: string) => void;
   createCompany: (data: ImportCompanyInput) => Company;
-  importCompanies: (items: ImportCompanyInput[]) => BulkImportResult;
-  bulkImportFromPdf: (items: ImportCompanyInput[]) => BulkImportResult;
-  upsertCompanyFromPdf: (data: ImportCompanyInput) => { company: Company; isNew: boolean };
+  importCompanies: (items: ImportCompanyInput[]) => Promise<BulkImportResult>;
+  bulkImportFromPdf: (items: ImportCompanyInput[]) => Promise<BulkImportResult>;
+  upsertCompanyFromPdf: (data: ImportCompanyInput) => Promise<{ company: Company; isNew: boolean }>;
   updateDeal: (id: string, data: UpdateDealInput) => void;
   updateDealStage: (dealId: string, stage: DealStage) => void;
   createContact: (data: CreateContactInput) => Contact;
@@ -91,23 +102,55 @@ type CrmContextValue = CrmState & {
   deleteContact: (id: string) => void;
   createActivity: (data: CreateActivityInput) => Activity;
   rescheduleFollowUp: (dealId: string, days: number) => void;
+  clearAllData: () => Promise<void>;
+  bulkDeleteCompanies: (ids: string[]) => Promise<void>;
+  bulkMarkMailSent: (companyIds: string[]) => Promise<void>;
+  refreshData: () => Promise<void>;
 };
 
 const CrmContext = createContext<CrmContextValue | null>(null);
 
-function newId(prefix: string) {
-  return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+function mergeCompanyUpdate(company: Company, data: UpdateCompanyInput): Company {
+  return { ...company, ...data };
 }
 
 export function CrmProvider({ children }: { children: ReactNode }) {
-  const [companies, setCompanies] = useState<Company[]>(() => loadCrmState().companies);
-  const [deals, setDeals] = useState<Deal[]>(() => loadCrmState().deals);
-  const [contacts, setContacts] = useState<Contact[]>(() => loadCrmState().contacts);
-  const [activities, setActivities] = useState<Activity[]>(() => loadCrmState().activities);
+  const supabase = useMemo(() => createClient(), []);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    saveCrmState({ companies, deals, contacts, activities });
-  }, [companies, deals, contacts, activities]);
+    let cancelled = false;
+
+    async function load() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await fetchCrmData(supabase);
+        if (!cancelled) {
+          setCompanies(data.companies);
+          setDeals(data.deals);
+          setContacts(data.contacts);
+          setActivities(data.activities);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Veriler yüklenemedi");
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
 
   const getCompanyById = useCallback(
     (id: string) => companies.find((c) => c.id === id),
@@ -215,147 +258,237 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       .sort((a, b) => (a.deal.next_follow_up ?? "").localeCompare(b.deal.next_follow_up ?? ""));
   }, [deals, companies]);
 
-  const updateCompany = useCallback((id: string, data: UpdateCompanyInput) => {
-    setCompanies((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...data } : c))
-    );
-  }, []);
-
-  const deleteCompany = useCallback((id: string) => {
-    setCompanies((prev) => prev.filter((c) => c.id !== id));
-    setDeals((prev) => prev.filter((d) => d.company_id !== id));
-    setContacts((prev) => prev.filter((c) => c.company_id !== id));
-    setActivities((prev) => prev.filter((a) => a.company_id !== id));
-  }, []);
-
-  const createCompanyWithDeal = useCallback((data: ImportCompanyInput): Company => {
-    const now = new Date().toISOString();
-    const company: Company = {
-      id: newId("c"),
-      name: data.name,
-      member_no: data.member_no ?? null,
-      sector: data.sector ?? null,
-      website: data.website ?? null,
-      email: data.email ?? null,
-      phone: data.phone ?? null,
-      source: data.source ?? null,
-      city: data.city ?? DEFAULT_CITY,
-      audit_status: (data.audit_status ?? "bilinmiyor") as AuditStatus,
-      audit_findings: data.audit_findings ?? null,
-      audit_impact: data.audit_impact ?? null,
-      audit_pdf_name: data.audit_pdf_name ?? null,
-      created_at: now,
-    };
-    const deal: Deal = {
-      id: newId("d"),
-      company_id: company.id,
-      stage: "yeni",
-      proposed_package: null,
-      estimated_value: null,
-      next_follow_up: format(addDays(new Date(), 3), "yyyy-MM-dd"),
-      created_at: now,
-      updated_at: now,
-    };
-    setCompanies((prev) => [...prev, company]);
-    setDeals((prev) => [...prev, deal]);
-    return company;
-  }, []);
-
-  const applyBulkImport = useCallback(
-    (items: ImportCompanyInput[]): BulkImportResult => {
-      const current = { companies, deals, contacts, activities };
-      const { created, updated, state } = bulkUpsertCompanies(items, current);
-      setCompanies(state.companies);
-      setDeals(state.deals);
-      setContacts(state.contacts);
-      return { created, updated };
+  const updateCompany = useCallback(
+    (id: string, data: UpdateCompanyInput) => {
+      setCompanies((prev) =>
+        prev.map((c) => (c.id === id ? mergeCompanyUpdate(c, data) : c))
+      );
+      updateCompanyRow(supabase, id, data).catch((err) => {
+        console.error("Firma güncellenemedi:", err);
+        fetchCrmData(supabase).then((fresh) => {
+          setCompanies(fresh.companies);
+        });
+      });
     },
-    [companies, deals, contacts, activities]
+    [supabase]
   );
 
-  const bulkImportFromPdf = applyBulkImport;
-
-  const importCompanies = useCallback(
-    (items: ImportCompanyInput[]) => applyBulkImport(items),
-    [applyBulkImport]
+  const deleteCompany = useCallback(
+    (id: string) => {
+      setCompanies((prev) => prev.filter((c) => c.id !== id));
+      setDeals((prev) => prev.filter((d) => d.company_id !== id));
+      setContacts((prev) => prev.filter((c) => c.company_id !== id));
+      setActivities((prev) => prev.filter((a) => a.company_id !== id));
+      deleteCompanyRow(supabase, id).catch((err) => {
+        console.error("Firma silinemedi:", err);
+        fetchCrmData(supabase).then((fresh) => {
+          setCompanies(fresh.companies);
+          setDeals(fresh.deals);
+          setContacts(fresh.contacts);
+          setActivities(fresh.activities);
+        });
+      });
+    },
+    [supabase]
   );
+
+  const createCompanyWithDeal = useCallback(
+    (data: ImportCompanyInput): Company => {
+      const now = new Date().toISOString();
+      const tempId = crypto.randomUUID();
+      const company: Company = {
+        id: tempId,
+        name: data.name,
+        member_no: data.member_no ?? null,
+        sector: data.sector ?? null,
+        website: data.website ?? null,
+        email: data.email ?? null,
+        phone: data.phone ?? null,
+        source: data.source ?? null,
+        city: data.city ?? DEFAULT_CITY,
+        audit_status: (data.audit_status ?? "bilinmiyor") as AuditStatus,
+        audit_findings: data.audit_findings ?? null,
+        audit_impact: data.audit_impact ?? null,
+        audit_pdf_name: data.audit_pdf_name ?? null,
+        created_at: now,
+      };
+      const deal: Deal = {
+        id: crypto.randomUUID(),
+        company_id: tempId,
+        stage: "yeni",
+        proposed_package: null,
+        estimated_value: null,
+        next_follow_up: format(addDays(new Date(), 3), "yyyy-MM-dd"),
+        created_at: now,
+        updated_at: now,
+      };
+
+      setCompanies((prev) => [...prev, company]);
+      setDeals((prev) => [...prev, deal]);
+
+      insertCompany(supabase, data)
+        .then(({ company: saved, deal: savedDeal }) => {
+          setCompanies((prev) => prev.map((c) => (c.id === tempId ? saved : c)));
+          setDeals((prev) => prev.map((d) => (d.company_id === tempId ? savedDeal : d)));
+          if (data.email || data.phone) {
+            fetchCrmData(supabase).then((fresh) => setContacts(fresh.contacts));
+          }
+        })
+        .catch((err) => {
+          console.error("Firma oluşturulamadı:", err);
+          setCompanies((prev) => prev.filter((c) => c.id !== tempId));
+          setDeals((prev) => prev.filter((d) => d.company_id !== tempId));
+        });
+
+      return company;
+    },
+    [supabase]
+  );
+
+  const bulkImportFromPdf = useCallback(
+    async (items: ImportCompanyInput[]): Promise<BulkImportResult> => {
+      const importResult = await bulkImportCompanies(supabase, items, companies);
+      const fresh = await fetchCrmData(supabase);
+      setCompanies(fresh.companies);
+      setDeals(fresh.deals);
+      setContacts(fresh.contacts);
+      setActivities(fresh.activities);
+      return { created: importResult.created, updated: importResult.updated };
+    },
+    [supabase, companies]
+  );
+
+  const importCompanies = bulkImportFromPdf;
 
   const upsertCompanyFromPdf = useCallback(
-    (data: ImportCompanyInput): { company: Company; isNew: boolean } => {
-      const result = bulkUpsertCompanies([data], { companies, deals, contacts, activities });
-      setCompanies(result.state.companies);
-      setDeals(result.state.deals);
-      setContacts(result.state.contacts);
+    async (data: ImportCompanyInput): Promise<{ company: Company; isNew: boolean }> => {
+      const importResult = await bulkImportCompanies(supabase, [data], companies);
+      const fresh = await fetchCrmData(supabase);
+      setCompanies(fresh.companies);
+      setDeals(fresh.deals);
+      setContacts(fresh.contacts);
       const company =
-        result.state.companies.find((c) => c.name === data.name) ??
-        result.state.companies.at(-1)!;
-      return { company, isNew: result.created > 0 };
+        fresh.companies.find((c) => c.name === data.name) ?? fresh.companies.at(-1)!;
+      return { company, isNew: importResult.created > 0 };
     },
-    [companies, deals, contacts, activities]
+    [supabase, companies]
   );
 
-  const updateDeal = useCallback((id: string, data: UpdateDealInput) => {
-    setDeals((prev) =>
-      prev.map((d) =>
-        d.id === id ? { ...d, ...data, updated_at: new Date().toISOString() } : d
-      )
-    );
-  }, []);
+  const updateDeal = useCallback(
+    (id: string, data: UpdateDealInput) => {
+      const updatedAt = new Date().toISOString();
+      setDeals((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, ...data, updated_at: updatedAt } : d))
+      );
+      updateDealRow(supabase, id, data).catch((err) => {
+        console.error("Deal güncellenemedi:", err);
+        fetchCrmData(supabase).then((fresh) => setDeals(fresh.deals));
+      });
+    },
+    [supabase]
+  );
 
   const updateDealStage = useCallback(
     (dealId: string, stage: DealStage) => updateDeal(dealId, { stage }),
     [updateDeal]
   );
 
-  const createContact = useCallback((data: CreateContactInput) => {
-    const contact: Contact = { ...data, id: newId("ct") };
-    if (contact.is_primary) {
-      setContacts((prev) =>
-        prev
-          .map((c) =>
-            c.company_id === contact.company_id ? { ...c, is_primary: false } : c
-          )
-          .concat(contact)
-      );
-    } else {
-      setContacts((prev) => [...prev, contact]);
-    }
-    return contact;
-  }, []);
+  const createContact = useCallback(
+    (data: CreateContactInput): Contact => {
+      const tempId = crypto.randomUUID();
+      const contact: Contact = { ...data, id: tempId };
 
-  const updateContact = useCallback((id: string, data: Partial<CreateContactInput>) => {
-    setContacts((prev) => {
-      const updated = prev.map((c) => (c.id === id ? { ...c, ...data } : c));
-      if (data.is_primary) {
-        const target = updated.find((c) => c.id === id);
-        if (target) {
-          return updated.map((c) =>
-            c.company_id === target.company_id
-              ? { ...c, is_primary: c.id === id }
-              : c
-          );
+      setContacts((prev) => {
+        const base =
+          contact.is_primary
+            ? prev.map((c) =>
+                c.company_id === contact.company_id ? { ...c, is_primary: false } : c
+              )
+            : prev;
+        return [...base, contact];
+      });
+
+      insertContact(supabase, data)
+        .then((saved) => {
+          setContacts((prev) => prev.map((c) => (c.id === tempId ? saved : c)));
+        })
+        .catch((err) => {
+          console.error("Kişi oluşturulamadı:", err);
+          setContacts((prev) => prev.filter((c) => c.id !== tempId));
+        });
+
+      return contact;
+    },
+    [supabase]
+  );
+
+  const updateContact = useCallback(
+    (id: string, data: Partial<CreateContactInput>) => {
+      setContacts((prev) => {
+        const updated = prev.map((c) => (c.id === id ? { ...c, ...data } : c));
+        if (data.is_primary) {
+          const target = updated.find((c) => c.id === id);
+          if (target) {
+            return updated.map((c) =>
+              c.company_id === target.company_id
+                ? { ...c, is_primary: c.id === id }
+                : c
+            );
+          }
         }
-      }
-      return updated;
-    });
-  }, []);
+        return updated;
+      });
+      updateContactRow(supabase, id, data).catch((err) => {
+        console.error("Kişi güncellenemedi:", err);
+        fetchCrmData(supabase).then((fresh) => setContacts(fresh.contacts));
+      });
+    },
+    [supabase]
+  );
 
-  const deleteContact = useCallback((id: string) => {
-    setContacts((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  const deleteContact = useCallback(
+    (id: string) => {
+      setContacts((prev) => prev.filter((c) => c.id !== id));
+      deleteContactRow(supabase, id).catch((err) => {
+        console.error("Kişi silinemedi:", err);
+        fetchCrmData(supabase).then((fresh) => setContacts(fresh.contacts));
+      });
+    },
+    [supabase]
+  );
 
-  const createActivity = useCallback((data: CreateActivityInput) => {
-    const activity: Activity = {
-      id: newId("a"),
-      company_id: data.company_id,
-      deal_id: data.deal_id ?? null,
-      type: data.type,
-      note: data.note,
-      created_at: new Date().toISOString(),
-    };
-    setActivities((prev) => [activity, ...prev]);
-    return activity;
-  }, []);
+  const createActivity = useCallback(
+    (data: CreateActivityInput): Activity => {
+      const tempId = crypto.randomUUID();
+      const activity: Activity = {
+        id: tempId,
+        company_id: data.company_id,
+        deal_id: data.deal_id ?? null,
+        type: data.type,
+        note: data.note,
+        created_at: new Date().toISOString(),
+      };
+
+      setActivities((prev) => [activity, ...prev]);
+
+      insertActivity(supabase, {
+        company_id: data.company_id,
+        deal_id: data.deal_id ?? null,
+        type: data.type,
+        note: data.note,
+      })
+        .then((saved) => {
+          setActivities((prev) => prev.map((a) => (a.id === tempId ? saved : a)));
+        })
+        .catch((err) => {
+          console.error("Aktivite oluşturulamadı:", err);
+          setActivities((prev) => prev.filter((a) => a.id !== tempId));
+        });
+
+      return activity;
+    },
+    [supabase]
+  );
 
   const rescheduleFollowUp = useCallback(
     (dealId: string, days: number) => {
@@ -365,12 +498,68 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     [updateDeal]
   );
 
+  const refreshData = useCallback(async () => {
+    const fresh = await fetchCrmData(supabase);
+    setCompanies(fresh.companies);
+    setDeals(fresh.deals);
+    setContacts(fresh.contacts);
+    setActivities(fresh.activities);
+  }, [supabase]);
+
+  const clearAllData = useCallback(async () => {
+    await clearAllCrmData(supabase);
+    setCompanies([]);
+    setDeals([]);
+    setContacts([]);
+    setActivities([]);
+  }, [supabase]);
+
+  const bulkDeleteCompanies = useCallback(
+    async (ids: string[]) => {
+      setCompanies((prev) => prev.filter((c) => !ids.includes(c.id)));
+      setDeals((prev) => prev.filter((d) => !ids.includes(d.company_id)));
+      setContacts((prev) => prev.filter((c) => !ids.includes(c.company_id)));
+      setActivities((prev) => prev.filter((a) => !ids.includes(a.company_id)));
+      await bulkDeleteCompaniesDb(supabase, ids);
+    },
+    [supabase]
+  );
+
+  const bulkMarkMailSent = useCallback(
+    async (companyIds: string[]) => {
+      const dealIds = deals
+        .filter((d) => companyIds.includes(d.company_id))
+        .map((d) => d.id);
+      if (!dealIds.length) return;
+
+      setDeals((prev) =>
+        prev.map((d) =>
+          dealIds.includes(d.id) ? { ...d, stage: "mail_atildi" as DealStage } : d
+        )
+      );
+      await bulkUpdateDealStage(supabase, dealIds, "mail_atildi");
+
+      for (const companyId of companyIds) {
+        const deal = deals.find((d) => d.company_id === companyId);
+        createActivity({
+          company_id: companyId,
+          deal_id: deal?.id ?? null,
+          type: "mail",
+          note: "Toplu işaretlendi (Titan Mail entegrasyonu sonraki adım).",
+        });
+      }
+    },
+    [supabase, deals, createActivity]
+  );
+
   const value = useMemo<CrmContextValue>(
     () => ({
       companies,
       deals,
       contacts,
       activities,
+      isLoading,
+      error,
       getCompanyById,
       getDealByCompanyId,
       getContactsByCompanyId,
@@ -396,12 +585,18 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       deleteContact,
       createActivity,
       rescheduleFollowUp,
+      clearAllData,
+      bulkDeleteCompanies,
+      bulkMarkMailSent,
+      refreshData,
     }),
     [
       companies,
       deals,
       contacts,
       activities,
+      isLoading,
+      error,
       getCompanyById,
       getDealByCompanyId,
       getContactsByCompanyId,
@@ -427,6 +622,10 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       deleteContact,
       createActivity,
       rescheduleFollowUp,
+      clearAllData,
+      bulkDeleteCompanies,
+      bulkMarkMailSent,
+      refreshData,
     ]
   );
 

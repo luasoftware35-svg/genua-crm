@@ -81,8 +81,8 @@ export function CsvImportDialog() {
     setStep("preview");
   };
 
-  const handleImport = () => {
-    const { created, updated } = importCompanies(preview);
+  const handleImport = async () => {
+    const { created, updated } = await importCompanies(preview);
     setOpen(false);
     reset();
     alert(`${created + updated} firma içe aktarıldı (${created} yeni, ${updated} güncelleme).`);

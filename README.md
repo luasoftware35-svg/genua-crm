@@ -1,51 +1,67 @@
-# Genua CRM
+# Genua Digital CRM
 
-Genua Digital Media için satış takip (mini-CRM) uygulaması.
+Hedef müşteri (OSB/BOSB/SOSB) takip paneli — [genuadigital.com](https://www.genuadigital.com)
 
 ## Teknoloji
 
 - Next.js 14 (App Router)
-- Supabase (Postgres + Auth) — sonraki adım
+- Supabase (Postgres + Auth + RLS)
 - Tailwind CSS + shadcn/ui
-- TypeScript, Recharts, dnd-kit, papaparse
+- TypeScript
 
 ## Kurulum
 
 ```bash
 npm install
+cp .env.local.example .env.local
+# .env.local içine Supabase URL + anon key (+ opsiyonel service role)
+npm run bootstrap:auth   # ilk CRM kullanıcısı
 npm run dev
 ```
 
-http://localhost:3000 → `/login` yönlendirir. Herhangi bir e-posta/şifre ile giriş yapabilirsiniz.
+http://localhost:3000 → `/login`
+
+## Ortam değişkenleri
+
+| Değişken | Açıklama |
+|----------|----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase proje URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon/public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Sadece seed/bootstrap scriptleri (git'e koyma) |
 
 ## Özellikler
 
 | Sayfa | Özellikler |
 |-------|-----------|
-| `/dashboard` | KPI kartları, kaynak/pipeline grafikleri, bugün takipler |
-| `/companies` | Arama, filtreler, **CSV import**, **firma ekle**, tıklanabilir tablo |
-| `/companies/[id]` | Firma düzenleme, denetim bulguları, kişi CRUD, aktivite ekleme, deal yönetimi |
-| `/pipeline` | Kanban + **sürükle-bırak** aşama değiştirme |
-| `/follow-ups` | Bugün/bu hafta takipler, +1/+7 gün erteleme, hızlı aşama değiştirme |
-| `/login` | Mock auth (cookie tabanlı, middleware korumalı) |
+| `/companies` | PDF önizlemeli import, filtreler, şehir sütunu, toplu seçim/silme/export |
+| `/companies/[id]` | Firma düzenleme, denetim PDF (tek firma), otomatik site denetimi |
+| `/cities` | Şehir bazlı firma grupları (Bursa, Sakarya, …) |
+| `/pipeline` | Kanban sürükle-bırak |
+| `/follow-ups` | Bugün / bu hafta takipler |
+| `/dashboard` | KPI + grafikler |
 
-## CSV Import
+## PDF tipleri
 
-1. `/companies` → **CSV İçe Aktar**
-2. Sütun eşleştirmesini kontrol et (firma adı zorunlu)
-3. Önizle → İçe aktar
-4. Her firma için otomatik `yeni` aşamasında deal oluşturulur
+- **Firma listesi** (BOSB/SOSB tablo PDF) → Ana sayfa **PDF Yükle** + önizleme
+- **Denetim raporu** (tek firma) → Firma detay sayfası **Denetim PDF**
 
-Desteklenen sütun alias'ları: firma, website, email, telefon, kaynak, sektör vb.
+OSB → şehir eşlemesi: BOSB=Bursa, SOSB=Sakarya, DOSB=Denizli
 
-## Supabase (sonraki adım)
+## Scriptler
 
-Migration: `supabase/migrations/20250706120000_initial_schema.sql`
+```bash
+npm run seed:pdf -- "/path/to/liste.pdf"
+npm run bootstrap:auth
+```
 
-`.env.local.example` dosyasını kopyalayıp URL + anon key girin.
+## Vercel deploy
 
-## Sonraki adımlar
+1. GitHub repo'yu Vercel'e bağla
+2. Environment Variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Deploy
 
-- Supabase bağlantısı (mock store → gerçek DB)
-- Otomatik site analizi (import sonrası)
-- Titan Mail entegrasyonu (otomatik mail gönderimi)
+Redirect URL: Supabase Auth → `https://your-domain.vercel.app/auth/callback`
+
+## Sonraki adım
+
+- Titan Mail entegrasyonu (toplu gerçek mail gönderimi)

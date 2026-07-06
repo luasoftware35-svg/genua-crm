@@ -1,4 +1,5 @@
 import type { Company } from "@/types";
+import { inferSourceFromFilename } from "@/lib/cities";
 
 export type ParsedCompanyReport = {
   detectedName: string;
@@ -417,6 +418,23 @@ export function isMemberListDocument(text: string, filename: string): boolean {
   return rowHits >= 5;
 }
 
+export type PdfDocumentKind = "member_list" | "audit_report";
+
+export function classifyPdfDocument(
+  text: string,
+  filename: string,
+  extractedCount: number
+): PdfDocumentKind {
+  if (isMemberListDocument(text, filename) && extractedCount >= 2) {
+    return "member_list";
+  }
+  return "audit_report";
+}
+
+export function pdfDocumentKindLabel(kind: PdfDocumentKind): string {
+  return kind === "member_list" ? "Firma listesi (toplu)" : "Denetim raporu (tek/çoklu firma)";
+}
+
 function extractWebsite(text: string): string | null {
   const http = text.match(/https?:\/\/[^\s,)]+/i);
   if (http) return http[0].replace(/[.,;]+$/, "");
@@ -436,6 +454,7 @@ function extractPhone(text: string): string | null {
 }
 
 function extractSource(text: string): string | null {
+  if (/\bSOSB\b/i.test(text)) return "SOSB";
   if (/\bBOSB\b/i.test(text)) return "BOSB";
   if (/\bDOSB\b/i.test(text)) return "DOSB";
   return null;
@@ -614,7 +633,7 @@ export function extractCompaniesFromPdf(text: string, filename: string): Extract
       website: extractWebsite(cleaned),
       email: extractEmail(cleaned),
       phone: extractPhone(cleaned),
-      source: extractSource(cleaned) ?? "BOSB",
+      source: extractSource(cleaned) ?? inferSourceFromFilename(filename) ?? "BOSB",
       findings: findings || cleaned,
       impact,
       rawText: cleaned,

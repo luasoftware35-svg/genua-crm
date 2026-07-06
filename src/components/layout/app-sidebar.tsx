@@ -74,14 +74,18 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
       <div className="p-4">
         <Separator className="mb-4" />
-        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground" asChild>
-          <Link href="/login" onClick={() => {
-            document.cookie = "genua-auth=; path=/; max-age=0";
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-muted-foreground"
+          onClick={async () => {
+            const { createClient } = await import("@/lib/supabase/client");
+            await createClient().auth.signOut();
             onNavigate?.();
-          }}>
-            <LogOut className="h-4 w-4" />
-            Çıkış
-          </Link>
+            window.location.href = "/login";
+          }}
+        >
+          <LogOut className="h-4 w-4" />
+          Çıkış
         </Button>
       </div>
     </>

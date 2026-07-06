@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivitySection } from "@/components/companies/activity-section";
 import { AuditForm } from "@/components/companies/audit-form";
+import { SiteAuditButton } from "@/components/companies/site-audit-button";
 import { CompanyForm } from "@/components/companies/company-form";
 import { ContactsSection } from "@/components/companies/contacts-section";
 import { DealPanel } from "@/components/companies/deal-panel";
@@ -155,6 +156,7 @@ export function CompanyDetailClient({ id }: { id: string }) {
       </div>
 
       <AuditForm company={company} />
+      <SiteAuditButton company={company} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ContactsSection companyId={company.id} />

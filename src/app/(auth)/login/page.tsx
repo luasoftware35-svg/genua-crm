@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,10 +10,48 @@ import { Label } from "@/components/ui/label";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    document.cookie = "genua-auth=1; path=/; max-age=604800";
+    setLoading(true);
+    setError(null);
+
+    const supabase = createClient();
+
+    if (isSignUp) {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (signUpError) {
+        setError(signUpError.message);
+        setLoading(false);
+        return;
+      }
+      setError(null);
+      alert("Hesap oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin, ardından giriş yapın.");
+      setIsSignUp(false);
+      setLoading(false);
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
+      return;
+    }
+
     window.location.href = "/companies";
   };
 
@@ -49,17 +88,29 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
+                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
-              Giriş Yap
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Bekleyin..." : isSignUp ? "Hesap Oluştur" : "Giriş Yap"}
             </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              Supabase Auth sonraki adımda. Şimdilik herhangi bir e-posta/şifre ile giriş yapabilirsiniz.
-            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-sm"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+              }}
+            >
+              {isSignUp ? "Zaten hesabınız var mı? Giriş yapın" : "İlk kurulum — hesap oluştur"}
+            </Button>
           </form>
         </CardContent>
       </Card>

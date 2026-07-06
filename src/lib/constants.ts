@@ -32,7 +32,7 @@ export const PROPOSED_PACKAGES: { value: ProposedPackage; label: string }[] = [
   { value: "tam_yeniden_yapim", label: "Tam Yeniden Yapım" },
 ];
 
-export const SOURCES = ["BOSB", "DOSB", "Diğer"] as const;
+export const SOURCES = ["BOSB", "SOSB", "DOSB", "Diğer"] as const;
 
 export function getStageLabel(stage: DealStage): string {
   return DEAL_STAGES.find((s) => s.value === stage)?.label ?? stage;
