@@ -11,8 +11,8 @@ export type TitanMailConfig = {
 export function getTitanMailConfig(): TitanMailConfig {
   const from = process.env.TITAN_MAIL_FROM ?? process.env.TITAN_SMTP_USER ?? "";
   const fromName = process.env.TITAN_MAIL_FROM_NAME ?? "Genua Digital";
-  const host = process.env.TITAN_SMTP_HOST ?? "smtp.titan.email";
-  const port = Number(process.env.TITAN_SMTP_PORT ?? "587");
+  const host = process.env.TITAN_SMTP_HOST ?? "smtpout.secureserver.net";
+  const port = Number(process.env.TITAN_SMTP_PORT ?? "465");
 
   return {
     configured: Boolean(process.env.TITAN_SMTP_USER && process.env.TITAN_SMTP_PASS && from),
