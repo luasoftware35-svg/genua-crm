@@ -1,3 +1,5 @@
+import { appendSignatureHtml, appendSignatureText, buildSignatureText } from "@/lib/mail-signature";
+
 export type MailTemplateInput = {
   companyName: string;
   website?: string | null;
@@ -5,10 +7,6 @@ export type MailTemplateInput = {
   auditFindings?: string | null;
   auditImpact?: string | null;
 };
-
-const SENDER_NAME = process.env.TITAN_MAIL_FROM_NAME ?? "Genua Digital";
-const SENDER_SITE = "https://www.genuadigital.com";
-const SENDER_EMAIL = process.env.TITAN_MAIL_FROM ?? "crm@genuadigital.com";
 
 function escapeHtml(value: string): string {
   return value
@@ -28,7 +26,7 @@ function findingsBlock(input: MailTemplateInput): string {
   return block;
 }
 
-export function buildOutreachMail(input: MailTemplateInput) {
+export function buildOutreachMailContent(input: MailTemplateInput) {
   const region = input.source ? `${input.source} bölgesindeki` : "OSB firmalarının";
   const websiteNote = input.website?.trim()
     ? ` (${input.website.trim()})`
@@ -37,16 +35,13 @@ export function buildOutreachMail(input: MailTemplateInput) {
   const subject = `${input.companyName} — dijital görünürlük hakkında kısa bir not`;
   const findings = findingsBlock(input);
 
-  const text = `Merhaba ${input.companyName} ekibi,
+  const bodyText = `Merhaba ${input.companyName} ekibi,
 
-Ben ${SENDER_NAME} ekibinden yazıyorum. ${region} dijital varlıklarını inceliyoruz${websiteNote}.${findings}
+Ben Genua Digital ekibinden yazıyorum. ${region} dijital varlıklarını inceliyoruz${websiteNote}.${findings}
 
 Size uygun bir dijital iyileştirme planı önerebilmemiz için 15 dakikalık kısa bir görüşme ayarlamak isteriz.
 
-Saygılarımızla,
-${SENDER_NAME}
-${SENDER_SITE}
-${SENDER_EMAIL}`;
+Saygılarımızla,`;
 
   const htmlFindings = input.auditFindings?.trim()
     ? `<p><strong>Web sitenizi incelediğimizde öne çıkan noktalar:</strong></p>
@@ -57,14 +52,32 @@ ${SENDER_EMAIL}`;
       }`
     : "";
 
-  const html = `<p>Merhaba <strong>${escapeHtml(input.companyName)}</strong> ekibi,</p>
-<p>Ben <strong>${escapeHtml(SENDER_NAME)}</strong> ekibinden yazıyorum. ${escapeHtml(region)} dijital varlıklarını inceliyoruz${websiteNote ? escapeHtml(websiteNote) : ""}.</p>
+  const bodyHtml = `<p>Merhaba <strong>${escapeHtml(input.companyName)}</strong> ekibi,</p>
+<p>Ben <strong>Genua Digital</strong> ekibinden yazıyorum. ${escapeHtml(region)} dijital varlıklarını inceliyoruz${websiteNote ? escapeHtml(websiteNote) : ""}.</p>
 ${htmlFindings}
 <p>Size uygun bir dijital iyileştirme planı önerebilmemiz için 15 dakikalık kısa bir görüşme ayarlamak isteriz.</p>
-<p>Saygılarımızla,<br/>
-<strong>${escapeHtml(SENDER_NAME)}</strong><br/>
-<a href="${SENDER_SITE}">${SENDER_SITE}</a><br/>
-${escapeHtml(SENDER_EMAIL)}</p>`;
+<p style="margin-bottom:0;">Saygılarımızla,</p>`;
 
-  return { subject, text, html };
+  return { subject, bodyText, bodyHtml };
+}
+
+export function buildOutreachMail(input: MailTemplateInput) {
+  const { subject, bodyText, bodyHtml } = buildOutreachMailContent(input);
+
+  return {
+    subject,
+    text: appendSignatureText(bodyText),
+    html: appendSignatureHtml(bodyHtml),
+  };
+}
+
+/** İstemci önizlemesi için varsayılan imza (sunucu env olmadan). */
+export function getDefaultSignatureText(): string {
+  return buildSignatureText({
+    companyName: "Genua Digital",
+    tagline: "Dijital Medya & Web Çözümleri",
+    email: "hello@genuadigital.com",
+    website: "https://www.genuadigital.com",
+    websiteLabel: "www.genuadigital.com",
+  });
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSignaturePreview } from "@/lib/mail-signature";
 import { createClient } from "@/lib/supabase/server";
 import { getTitanMailConfig } from "@/lib/titan-mail";
 
@@ -13,9 +14,11 @@ export async function GET() {
   }
 
   const config = getTitanMailConfig();
+  const signature = getSignaturePreview();
   return NextResponse.json({
     configured: config.configured,
     from: config.from,
     fromName: config.fromName,
+    signatureText: signature.text,
   });
 }

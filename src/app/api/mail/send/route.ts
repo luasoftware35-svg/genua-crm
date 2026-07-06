@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isValidEmail } from "@/lib/mail-recipients";
+import { appendSignatureHtml, appendSignatureText } from "@/lib/mail-signature";
 import { createClient } from "@/lib/supabase/server";
 import { getTitanMailConfig, sendTitanMail } from "@/lib/titan-mail";
 
@@ -76,11 +77,23 @@ export async function POST(request: Request) {
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
     try {
+      const text = appendSignatureText(msg.text.trim());
+      const html = msg.html
+        ? appendSignatureHtml(msg.html)
+        : appendSignatureHtml(
+            `<div style="white-space:pre-line;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#374151;line-height:1.6;">${msg.text
+              .trim()
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/\n/g, "<br/>")}</div>`
+          );
+
       await sendTitanMail({
         to: msg.to,
         subject: msg.subject.trim(),
-        text: msg.text,
-        html: msg.html,
+        text,
+        html,
       });
       results.push({ companyId: msg.companyId, to: msg.to, ok: true });
     } catch (err) {

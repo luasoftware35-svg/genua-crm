@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { buildOutreachMail } from "@/lib/mail-templates";
+import { buildOutreachMailContent } from "@/lib/mail-templates";
 import { resolveCompanyEmail } from "@/lib/mail-recipients";
 import { useCrm } from "@/context/crm-context";
 
@@ -50,6 +50,7 @@ export function BulkMailDialog({
   const [previewCompanyId, setPreviewCompanyId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signatureText, setSignatureText] = useState("");
 
   const sendable = useMemo(
     () => targets.filter((t) => t.to),
@@ -74,21 +75,24 @@ export function BulkMailDialog({
             ? `${data.fromName} <${data.from}>`
             : "Titan Mail yapılandırılmamış"
         );
+        if (typeof data.signatureText === "string") {
+          setSignatureText(data.signatureText);
+        }
       })
       .catch(() => setConfigured(false));
   }, [open]);
 
   useEffect(() => {
     if (!open || !previewTarget) return;
-    const mail = buildOutreachMail({
+    const content = buildOutreachMailContent({
       companyName: previewTarget.companyName,
       website: previewTarget.website,
       source: previewTarget.source,
       auditFindings: previewTarget.auditFindings,
       auditImpact: previewTarget.auditImpact,
     });
-    setSubject(mail.subject);
-    setBody(mail.text);
+    setSubject(content.subject);
+    setBody(content.bodyText);
     setPreviewCompanyId(previewTarget.companyId);
   }, [open, previewTarget?.companyId]);
 
@@ -99,23 +103,29 @@ export function BulkMailDialog({
 
     try {
       const messages = sendable.map((target) => {
-        const personalized =
-          sendable.length === 1
-            ? { subject: subject.trim(), text: body.trim(), html: undefined }
-            : buildOutreachMail({
-                companyName: target.companyName,
-                website: target.website,
-                source: target.source,
-                auditFindings: target.auditFindings,
-                auditImpact: target.auditImpact,
-              });
+        if (sendable.length === 1) {
+          return {
+            companyId: target.companyId,
+            to: target.to!,
+            subject: subject.trim(),
+            text: body.trim(),
+          };
+        }
+
+        const content = buildOutreachMailContent({
+          companyName: target.companyName,
+          website: target.website,
+          source: target.source,
+          auditFindings: target.auditFindings,
+          auditImpact: target.auditImpact,
+        });
 
         return {
           companyId: target.companyId,
           to: target.to!,
-          subject: personalized.subject,
-          text: personalized.text,
-          html: personalized.html,
+          subject: content.subject,
+          text: content.bodyText,
+          html: content.bodyHtml,
         };
       });
 
@@ -205,15 +215,15 @@ export function BulkMailDialog({
                     className="cursor-pointer"
                     onClick={() => {
                       setPreviewCompanyId(t.companyId);
-                      const mail = buildOutreachMail({
+                      const content = buildOutreachMailContent({
                         companyName: t.companyName,
                         website: t.website,
                         source: t.source,
                         auditFindings: t.auditFindings,
                         auditImpact: t.auditImpact,
                       });
-                      setSubject(mail.subject);
-                      setBody(mail.text);
+                      setSubject(content.subject);
+                      setBody(content.bodyText);
                     }}
                   >
                     {t.companyName}
@@ -239,15 +249,24 @@ export function BulkMailDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="mail-body">Mesaj (önizleme)</Label>
+            <Label htmlFor="mail-body">Mesaj</Label>
             <Textarea
               id="mail-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              rows={12}
+              rows={10}
               className="font-mono text-sm"
             />
           </div>
+
+          {signatureText && (
+            <div className="space-y-2">
+              <Label>E-posta imzası (otomatik eklenir)</Label>
+              <div className="rounded-lg border bg-muted/40 p-3 text-sm whitespace-pre-line text-muted-foreground">
+                {signatureText}
+              </div>
+            </div>
+          )}
 
           {previewTarget && (
             <p className="text-xs text-muted-foreground">
