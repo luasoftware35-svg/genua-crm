@@ -6,11 +6,18 @@ export type MailSignatureConfig = {
   websiteLabel: string;
   phone?: string;
   signerName?: string;
+  logoUrl?: string;
+  logoWidth: number;
 };
+
+const DEFAULT_LOGO =
+  "https://genuadigital.com/varl%C4%B1klar/resimler/genua-logo.png";
 
 function readConfig(): MailSignatureConfig {
   const website = process.env.TITAN_MAIL_WEBSITE ?? "https://www.genuadigital.com";
   const email = process.env.TITAN_MAIL_FROM ?? "hello@genuadigital.com";
+  const logoUrl = process.env.TITAN_MAIL_SIGNATURE_IMAGE_URL?.trim() || DEFAULT_LOGO;
+  const logoWidth = Number(process.env.TITAN_MAIL_SIGNATURE_IMAGE_WIDTH ?? "140") || 140;
 
   return {
     companyName: process.env.TITAN_MAIL_FROM_NAME ?? "Genua Digital",
@@ -20,6 +27,8 @@ function readConfig(): MailSignatureConfig {
     websiteLabel: website.replace(/^https?:\/\//, "").replace(/\/$/, ""),
     phone: process.env.TITAN_MAIL_SIGNER_PHONE?.trim() || undefined,
     signerName: process.env.TITAN_MAIL_SIGNER_NAME?.trim() || undefined,
+    logoUrl,
+    logoWidth,
   };
 }
 
@@ -51,33 +60,57 @@ export function buildSignatureText(config: MailSignatureConfig = readConfig()): 
   return lines.join("\n");
 }
 
-export function buildSignatureHtml(config: MailSignatureConfig = readConfig()): string {
-  const custom = process.env.TITAN_MAIL_SIGNATURE_HTML?.trim();
-  if (custom) {
-    return custom;
-  }
+function buildLogoCell(config: MailSignatureConfig): string {
+  if (!config.logoUrl) return "";
 
+  return `<td style="padding:0 16px 0 0;vertical-align:top;width:${config.logoWidth}px;">
+  <a href="${escapeHtml(config.website)}" style="text-decoration:none;">
+    <img
+      src="${escapeHtml(config.logoUrl)}"
+      alt="${escapeHtml(config.companyName)}"
+      width="${config.logoWidth}"
+      style="display:block;border:0;outline:none;max-width:${config.logoWidth}px;height:auto;"
+    />
+  </a>
+</td>`;
+}
+
+function buildTextCell(config: MailSignatureConfig): string {
   const nameLine = config.signerName
-    ? `<p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#111827;">${escapeHtml(config.signerName)}</p>
-<p style="margin:0 0 8px;font-size:13px;color:#6b7280;">${escapeHtml(config.companyName)} · ${escapeHtml(config.tagline)}</p>`
-    : `<p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#111827;">${escapeHtml(config.companyName)}</p>
-<p style="margin:0 0 8px;font-size:13px;color:#6b7280;">${escapeHtml(config.tagline)}</p>`;
+    ? `<p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#111827;line-height:1.4;">${escapeHtml(config.signerName)}</p>
+<p style="margin:0 0 6px;font-size:13px;color:#6b7280;line-height:1.4;">${escapeHtml(config.companyName)} · ${escapeHtml(config.tagline)}</p>`
+    : `<p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#111827;line-height:1.4;">${escapeHtml(config.companyName)}</p>
+<p style="margin:0 0 6px;font-size:13px;color:#6b7280;line-height:1.4;">${escapeHtml(config.tagline)}</p>`;
 
   const contactLine = `<a href="${escapeHtml(config.website)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(config.websiteLabel)}</a>
 <span style="color:#9ca3af;"> · </span>
 <a href="mailto:${escapeHtml(config.email)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(config.email)}</a>`;
 
   const phoneLine = config.phone
-    ? `<p style="margin:8px 0 0;font-size:13px;color:#374151;">${escapeHtml(config.phone)}</p>`
+    ? `<p style="margin:6px 0 0;font-size:13px;color:#374151;line-height:1.4;">${escapeHtml(config.phone)}</p>`
     : "";
+
+  const borderStyle = config.logoUrl
+    ? "border-left:1px solid #e5e7eb;padding-left:16px;"
+    : "";
+
+  return `<td style="padding:0;vertical-align:top;${borderStyle}">
+  ${nameLine}
+  <p style="margin:0;font-size:13px;line-height:1.5;color:#374151;">${contactLine}</p>
+  ${phoneLine}
+</td>`;
+}
+
+export function buildSignatureHtml(config: MailSignatureConfig = readConfig()): string {
+  const custom = process.env.TITAN_MAIL_SIGNATURE_HTML?.trim();
+  if (custom) {
+    return custom;
+  }
 
   return `<table cellpadding="0" cellspacing="0" role="presentation" style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-family:Arial,Helvetica,sans-serif;">
   <tr>
-    <td style="padding:0;">
-      ${nameLine}
-      <p style="margin:0;font-size:13px;line-height:1.5;color:#374151;">${contactLine}</p>
-      ${phoneLine}
-    </td>
+    ${buildLogoCell(config)}
+    ${buildTextCell(config)}
   </tr>
 </table>`;
 }
@@ -104,5 +137,6 @@ export function getSignaturePreview() {
   return {
     text: buildSignatureText(config),
     html: buildSignatureHtml(config),
+    logoUrl: config.logoUrl ?? null,
   };
 }

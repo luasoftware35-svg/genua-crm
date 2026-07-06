@@ -69,18 +69,26 @@ npm run bootstrap:auth
 npm run test:titan-mail -- opsiyonel-alici@firma.com
 ```
 
-## Titan Mail
+## Titan Mail (GoDaddy + Titan)
 
-Titan REST API sunmaz; **SMTP** ile gönderim yapılır (`nodemailer`).
+GoDaddy kurumsal mail aldıysanız altyapı çoğu planda **Titan**’dır. Ek API ücreti yok; mevcut `hello@genuadigital.com` kutusundan SMTP ile gönderilir.
 
-1. Titan panelinde **Third-party email access** açın
-2. **2FA kapalı** olmalı (SMTP için Titan kuralı)
-3. Vercel'e env ekleyin: `TITAN_SMTP_USER`, `TITAN_SMTP_PASS`, `TITAN_MAIL_FROM`
-4. Local test: `npm run test:titan-mail`
+1. GoDaddy → **Email & Office** → `hello@genuadigital.com` şifresini kullanın
+2. Titan/GoDaddy panelinde **third-party email access** açık olsun
+3. Env değişkenleri:
 
-Panelden **Titan ile Gönder** → firma adı + denetim bulguları şablona işlenir → pipeline `Mail Atıldı` olur.
+```env
+TITAN_SMTP_USER=hello@genuadigital.com
+TITAN_SMTP_PASS=godaddy-mail-sifren
+TITAN_MAIL_FROM=hello@genuadigital.com
+TITAN_MAIL_FROM_NAME=Genua Digital
+```
 
-SMTP: `smtp.titan.email:587` (STARTTLS) veya `:465` (SSL)
+4. Local test: `npm run test:titan-mail -- kendi@mailin.com`
+
+> **Not:** Panel girişi (`crm@genuadigital.com`) Supabase hesabıdır — gönderen adresinden farklıdır. Müşterilere giden mailler `hello@genuadigital.com` üzerinden gider.
+
+SMTP: `smtp.titan.email:587` (STARTTLS)
 
 ## Vercel deploy
 

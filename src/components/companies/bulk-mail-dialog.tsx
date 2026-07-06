@@ -51,6 +51,7 @@ export function BulkMailDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signatureText, setSignatureText] = useState("");
+  const [signatureLogoUrl, setSignatureLogoUrl] = useState<string | null>(null);
 
   const sendable = useMemo(
     () => targets.filter((t) => t.to),
@@ -77,6 +78,9 @@ export function BulkMailDialog({
         );
         if (typeof data.signatureText === "string") {
           setSignatureText(data.signatureText);
+        }
+        if (typeof data.signatureLogoUrl === "string") {
+          setSignatureLogoUrl(data.signatureLogoUrl);
         }
       })
       .catch(() => setConfigured(false));
@@ -259,11 +263,24 @@ export function BulkMailDialog({
             />
           </div>
 
-          {signatureText && (
+          {(signatureText || signatureLogoUrl) && (
             <div className="space-y-2">
               <Label>E-posta imzası (otomatik eklenir)</Label>
-              <div className="rounded-lg border bg-muted/40 p-3 text-sm whitespace-pre-line text-muted-foreground">
-                {signatureText}
+              <div className="rounded-lg border bg-muted/40 p-4">
+                <div className="flex items-start gap-4">
+                  {signatureLogoUrl && (
+                    <img
+                      src={signatureLogoUrl}
+                      alt="Genua Digital"
+                      className="h-14 w-auto max-w-[140px] object-contain"
+                    />
+                  )}
+                  {signatureText && (
+                    <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-sans">
+                      {signatureText.replace(/^--\n/, "")}
+                    </pre>
+                  )}
+                </div>
               </div>
             </div>
           )}

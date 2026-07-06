@@ -79,5 +79,7 @@ export function getDefaultSignatureText(): string {
     email: "hello@genuadigital.com",
     website: "https://www.genuadigital.com",
     websiteLabel: "www.genuadigital.com",
+    logoUrl: "https://genuadigital.com/varl%C4%B1klar/resimler/genua-logo.png",
+    logoWidth: 140,
   });
 }
