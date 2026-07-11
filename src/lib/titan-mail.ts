@@ -1,6 +1,8 @@
+import path from "path";
 import fs from "fs";
 import nodemailer from "nodemailer";
 import { getSignatureImagePath, SIGNATURE_CID } from "@/lib/mail-signature";
+import { archiveOutboundMail, getBccSelfAddress } from "@/lib/titan-sent";
 
 export type TitanMailConfig = {
   configured: boolean;
@@ -52,6 +54,11 @@ export type SendMailInput = {
   text: string;
   html?: string;
   replyTo?: string;
+  attachments?: Array<{
+    filename: string;
+    path: string;
+    cid?: string;
+  }>;
 };
 
 function getSignatureAttachment() {
@@ -65,21 +72,37 @@ function getSignatureAttachment() {
   };
 }
 
+export function resolvePublicAttachment(publicPath: string): { filename: string; path: string } | null {
+  const cleaned = publicPath.replace(/^\/+/, "");
+  const absolute = path.join(process.cwd(), "public", cleaned);
+  if (!fs.existsSync(absolute)) return null;
+  return {
+    filename: path.basename(absolute),
+    path: absolute,
+  };
+}
+
 export async function sendTitanMail(input: SendMailInput): Promise<void> {
   const config = getTitanMailConfig();
   const transporter = createTransporter();
   const replyTo = input.replyTo ?? process.env.TITAN_MAIL_REPLY_TO ?? config.from;
-  const attachment = getSignatureAttachment();
+  const signatureAttachment = getSignatureAttachment();
+  const attachments = [...(input.attachments ?? [])];
+  if (signatureAttachment) attachments.push(signatureAttachment);
 
-  await transporter.sendMail({
+  const mailOptions = {
     from: `"${TITAN_FROM_NAME}" <${config.from}>`,
     to: input.to,
+    bcc: getBccSelfAddress(config.from),
     replyTo,
     subject: input.subject,
     text: input.text,
     html: input.html ?? input.text.replace(/\n/g, "<br/>"),
-    attachments: attachment ? [attachment] : undefined,
-  });
+    attachments: attachments.length ? attachments : undefined,
+  };
+
+  await transporter.sendMail(mailOptions);
+  await archiveOutboundMail(mailOptions);
 }
 
 export async function verifyTitanConnection(): Promise<void> {

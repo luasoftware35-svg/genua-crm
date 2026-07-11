@@ -1,0 +1,82 @@
+{
+  "01_AVS_Iplik_Tekstil.pdf": {
+    "companyName": "A.V.S İplik Tekstil San. Tic. Ltd. Şti.",
+    "to": "info@yangincitekstil.com",
+    "subject": "avstekstil.com için ücretsiz analiz raporunuz hazır",
+    "body": "Merhaba,\n\nGenua Digital olarak Uşak OSB'deki tekstil firmalarının dijital görünürlüğü üzerine bir çalışma yürütüyoruz. Bu kapsamda avstekstil.com adresini inceledik.\n\nSitenizin genel altyapısı sağlam, ancak ihracat potansiyelinizi doğrudan etkileyen birkaç teknik nokta gözümüze çarptı: sosyal medyada paylaşıldığında önizleme görselinin bazı tarayıcılarda çıkmaması, Google'ın sizi zengin sonuçlarla gösterebilmesi için gereken yapısal veri eksikliği ve düzenli içerik üretilmemesi nedeniyle organik aramada zamanla geri düşme riski.\n\nBulgularımızı ve önerdiğimiz çözümü tek sayfalık bir raporda ekte paylaşıyoruz. Dilerseniz 15 dakikalık bir görüşmeyle bu noktaları nasıl çözebileceğimizi anlatalım.",
+    "pdfPath": "/audits/usak-osb/01_AVS_Iplik_Tekstil.pdf",
+    "dnsOk": true
+  },
+  "02_Agreton.pdf": {
+    "companyName": "Agreton Beton ve Yapı Elemanları San. ve Tic. A.Ş.",
+    "to": "info@agreton.com.tr",
+    "subject": "agreton.com.tr sitenizde tespit ettiğimiz eksiklikler",
+    "body": "Merhaba,\n\nUşak OSB'deki firmaların web varlığını incelediğimiz çalışmamız kapsamında agreton.com.tr adresini değerlendirdik.\n\nSitenizin sayfa adresleri hâlâ eski tip \"?page_id=\" formatında; bu yapı Google tarafından düşük öncelikli değerlendiriliyor ve arama sonuçlarında geride kalmanıza neden oluyor. Ayrıca ürünleriniz için görsel galeri ve indirilebilir teknik döküman bulunmaması, kurumsal/belediye ihalelerinde tercih edilme şansınızı azaltabiliyor.\n\nDetaylı bulgularımızı ekteki raporda bulabilirsiniz. İsterseniz bu konuları kısa bir görüşmede konuşalım.",
+    "pdfPath": "/audits/usak-osb/02_Agreton.pdf",
+    "dnsOk": false
+  },
+  "03_Alkar_Atlas.pdf": {
+    "companyName": "Alkar Atlas Teks. San. Tic. İth. İhr. Ltd. Şti.",
+    "to": "alkaratlas@hotmail.com",
+    "subject": "alkaratlas.com — sitenizle ilgili önemli bir bulgu",
+    "body": "Merhaba,\n\nUşak OSB firmalarının dijital görünürlüğünü incelerken alkaratlas.com adresinizle ilgili dikkat çekici bir durum tespit ettik: site şu anda Google aramalarında hiçbir şekilde görünmüyor. Bu, alan adının pasif duruma düşmüş ya da uzun süredir güncellenmediği için indeksten çıkmış olabileceğini gösteriyor.\n\nBunun sonucunda firmanız şu anda yalnızca üçüncü parti B2B dizinleri üzerinden bulunabiliyor; kendi marka kimliğinizle değil. Bir alıcı firma adınızı aradığında karşısına hiçbir şey çıkmaması ciddi bir güven kaybına yol açabiliyor.\n\nKonuyu ve önerdiğimiz çözümü ekteki raporda özetledik. Bu firma için gerçek bir \"yeniden inşa\" fırsatı olduğunu düşünüyoruz — dilerseniz görüşelim.",
+    "pdfPath": "/audits/usak-osb/03_Alkar_Atlas.pdf",
+    "dnsOk": true
+  },
+  "04_Alperteks_Mensucat.pdf": {
+    "companyName": "Alperteks Mensucat San. ve Tic. A.Ş.",
+    "to": "info@alperteks.com.tr",
+    "subject": "alperteks.com.tr — İngilizce aramalarda kaybettiğiniz görünürlük",
+    "body": "Merhaba,\n\nUşak OSB'deki firmaların web sitelerini incelediğimiz çalışmamızda alperteks.com.tr sitenizi de değerlendirdik.\n\nİngilizce içeriğinizin \"?lang=en\" gibi bir parametre üzerinden sunulması, Google'ın bunu ayrı bir sayfa olarak değil mevcut sayfanın bir varyasyonu olarak algılamasına yol açıyor — bu da uluslararası aramalarda görünürlüğünüzü zayıflatıyor. Ayrıca kullanılan alt yapının (PHP/jQuery) güncel olmaması sayfa hızını ve güvenliği etkiliyor.\n\n55 ton/gün üretim kapasitesi gibi güçlü verileriniz sitede yeterince öne çıkmıyor. Detayları ekteki raporda bulabilirsiniz, memnuniyetle görüşme ayarlayabiliriz.",
+    "pdfPath": "/audits/usak-osb/04_Alperteks_Mensucat.pdf",
+    "dnsOk": true
+  },
+  "05_Altinkoza_Tekstil.pdf": {
+    "companyName": "Altınkoza Tekstil San. Tic. Ltd. Şti.",
+    "to": "bilgi@pamukcutekstil.com",
+    "subject": "altinkozatekstil.com sitenizde fark ettiğimiz bir detay",
+    "body": "Merhaba,\n\nUşak OSB'deki tekstil firmalarının dijital görünürlüğü üzerine yürüttüğümüz çalışmada altinkozatekstil.com adresinizi inceledik.\n\nSitenizin Wix üzerinde hazır bir şablonla kurulduğunu ve arama motoru etiketlerinde hâlâ platformun varsayılan örnek kelimelerinin (\"Clothing, Store\") yer aldığını gördük — bu, gerçek üretim alanınızla (iplik, battaniye) örtüşmüyor ve Google'ın sizi doğru aramalarla eşleştirmesini zorlaştırıyor. 1970'ten beri süren köklü geçmişiniz de sitede yeterince yansıtılmıyor.\n\nBulgularımızı ekteki raporda paylaşıyoruz. 55 yıllık hikayenizi hak ettiği şekilde anlatan bir site için konuşmaktan memnuniyet duyarız.",
+    "pdfPath": "/audits/usak-osb/05_Altinkoza_Tekstil.pdf",
+    "dnsOk": true
+  },
+  "06_Altinsar_Tekstil.pdf": {
+    "companyName": "Altınsar Tekstil San. ve Tic. A.Ş.",
+    "to": "altinsar@altinsar.com",
+    "subject": "altinsar.com.tr — üretim gücünüz sitenize yansımıyor",
+    "body": "Merhaba,\n\nUşak OSB'deki firmaların web sitelerini incelediğimiz çalışma kapsamında altinsar.com.tr adresinizi değerlendirdik.\n\nSitenizin artık kullanılmayan eski bir Bootstrap/Owl Carousel altyapısı üzerine kurulu olduğunu tespit ettik. 70.000 m² entegre üretim tesisi ve günlük 30.000 metre battaniye üretimi gibi çok güçlü ölçek verileriniz olmasına rağmen bunlar sitede öne çıkmıyor; TSE ve Oeko-Tex sertifikalarınız da indirilebilir/görsel olarak sunulmuyor.\n\nHOMETEX gibi fuarlara katıldığınızı biliyoruz — fuar sonrası sitenizi ziyaret eden alıcıların üretim gücünüzle örtüşen bir izlenim edinmesi önemli. Detayları ekteki raporda bulabilirsiniz.",
+    "pdfPath": "/audits/usak-osb/06_Altinsar_Tekstil.pdf",
+    "dnsOk": true
+  },
+  "07_Altuner_Musamba.pdf": {
+    "companyName": "Altuner Muşamba San. ve Tic. Ltd. Şti.",
+    "to": "bilgi@altunerticaret.com.tr",
+    "subject": "altunerpvc.com — sitenizle ilgili önemli bir bulgu",
+    "body": "Merhaba,\n\nUşak OSB firmalarının dijital görünürlüğünü incelediğimiz çalışmada altunerpvc.com adresinizi araştırdık ve sitenizin Google aramalarında hiçbir şekilde yer almadığını tespit ettik. Bu, sitenin uzun süredir güncellenmediğini ya da teknik olarak erişilebilir olmadığını gösteriyor.\n\nSonuç olarak, OSB kayıtlarında PVC/muşamba üretimi yaptığınız bilgisi yer alsa da, bunu doğrulayacak ya da ürünlerinizi gösterecek hiçbir dijital kaynağa şu an ulaşılamıyor. Bu sektörde alıcılar genelde birkaç tedarikçiyi yan yana karşılaştırıyor; sitesi görünmeyen bir firma bu karşılaştırmanın tamamen dışında kalıyor.\n\nEkteki raporda detayları bulabilirsiniz. Dilerseniz görüşüp bu konuyu birlikte çözelim.",
+    "pdfPath": "/audits/usak-osb/07_Altuner_Musamba.pdf",
+    "dnsOk": false
+  },
+  "08_Arslan_Elektrik_Kablo.pdf": {
+    "companyName": "Arslan Elk. Kablo San. ve Tic. Ltd. Şti.",
+    "to": "serkanarslan64@hotmail.com",
+    "subject": "arslanelektrik.com.tr — dikkatinizi çekmek istediğimiz kritik bir durum",
+    "body": "Merhaba,\n\nUşak OSB'deki firmaların web sitelerini incelerken arslanelektrik.com.tr adresinizle ilgili önemli bir bulguya rastladık: bu adreste şu anda görünen içerik, sizin 1992'den beri Uşak'ta sürdürdüğünüz elektrik-kablo imalat faaliyetinize değil, İstanbul Beşiktaş'ta faaliyet gösteren tamamen farklı bir elektrik taahhüt firmasına ait görünüyor.\n\nBu durum, alan adınızın kaybedilmiş ya da yanlış yönlendirilmiş olabileceğine işaret ediyor. Pratik sonucu şu: bir müşteri firma adınızı aradığında karşısına alakasız bir firma çıkıyor ve büyük ihtimalle sizi bulamadan rakibe yöneliyor.\n\nKonuyu ve önerdiğimiz adımları ekteki raporda özetledik. Bu, öncelikli olarak ele almanızı önereceğimiz bir konu — dilerseniz hemen görüşelim.",
+    "pdfPath": "/audits/usak-osb/08_Arslan_Elektrik_Kablo.pdf",
+    "dnsOk": true
+  },
+  "09_Billur_Tekstil.pdf": {
+    "companyName": "Billur Tekstil San. ve Tic. Ltd. Şti. (Arif Öztan)",
+    "to": "info@billuteks.com",
+    "subject": "billurtekstil.com sitenizde tespit ettiğimiz teknik eksiklikler",
+    "body": "Merhaba,\n\nUşak OSB'deki tekstil firmalarının web sitelerini incelediğimiz çalışmada billurtekstil.com adresinizi de değerlendirdik.\n\nSitenizin hâlâ Classic ASP (artık desteklenmeyen, çok eski bir teknoloji) altyapısı üzerinde çalıştığını gördük. Bunun somut bir sonucu olarak arama motoru sonuçlarında Türkçe karakterleriniz bozuk görünüyor (\"yün iplik\" yerine \"yn iplik\" gibi) — bu hem doğru kelimelerle aranmanızı zorlaştırıyor hem de ziyaretçilere bakımsız bir izlenim veriyor. Mobil cihazlardan görüntülemede de ciddi sorunlar olduğunu tahmin ediyoruz.\n\nDetayları ekteki raporda paylaşıyoruz. İstanbul-Uşak iki şehirli köklü yapınızı hak ettiği şekilde yansıtan bir site için konuşmak isteriz.",
+    "pdfPath": "/audits/usak-osb/09_Billur_Tekstil.pdf",
+    "dnsOk": false
+  },
+  "10_Aselmop_Asl_Iplik.pdf": {
+    "companyName": "Asl İplik Üretim ve Pazarlama A.Ş. / Saytex Tekstil",
+    "to": "muhasebe@aselmop.com.tr",
+    "subject": "aselmop.com.tr sitenizde fark ettiğimiz detaylar",
+    "body": "Merhaba,\n\nUşak OSB firmalarının web sitelerini incelediğimiz çalışma kapsamında aselmop.com.tr adresinizi de değerlendirdik.\n\nSitede \"MOP GURUBU ÜRÜNLER\" gibi yazım hataları ve eski bir tasarım dikkatimizi çekti; üretim kapasitenizi, sertifikalarınızı ya da kurumsal hikayenizi anlatan bir içerik bulunmuyor. Ürün odaklı ama kurumsal anlatımı olmayan bir site, B2B alıcılar nezdinde olduğunuzdan daha küçük bir firma izlenimi bırakabiliyor.\n\nEkteki raporda bulgularımızı ve önerimizi paylaşıyoruz. Kurumsal hikayenizi doğru yansıtan bir site için görüşmekten memnuniyet duyarız.",
+    "pdfPath": "/audits/usak-osb/10_Aselmop_Asl_Iplik.pdf",
+    "dnsOk": true
+  }
+}

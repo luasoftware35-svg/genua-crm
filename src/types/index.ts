@@ -34,6 +34,9 @@ export interface Company {
   audit_findings: string | null;
   audit_impact: string | null;
   audit_pdf_name?: string | null;
+  audit_pdf_path?: string | null;
+  mail_subject?: string | null;
+  mail_body?: string | null;
   member_no?: string | null;
   created_at: string;
 }

@@ -35,6 +35,9 @@ type CompanyRow = {
   audit_findings: string | null;
   audit_impact: string | null;
   audit_pdf_name: string | null;
+  audit_pdf_path: string | null;
+  mail_subject: string | null;
+  mail_body: string | null;
   created_at: string;
 };
 
@@ -84,6 +87,9 @@ function mapCompany(row: CompanyRow): Company {
     audit_findings: row.audit_findings,
     audit_impact: row.audit_impact,
     audit_pdf_name: row.audit_pdf_name,
+    audit_pdf_path: row.audit_pdf_path,
+    mail_subject: row.mail_subject,
+    mail_body: row.mail_body,
     created_at: row.created_at,
   };
 }
@@ -139,6 +145,9 @@ function companyInsertPayload(data: ImportCompanyInput) {
     audit_findings: data.audit_findings ?? null,
     audit_impact: data.audit_impact ?? null,
     audit_pdf_name: data.audit_pdf_name ?? null,
+    audit_pdf_path: data.audit_pdf_path ?? null,
+    mail_subject: data.mail_subject ?? null,
+    mail_body: data.mail_body ?? null,
   };
 }
 
@@ -154,6 +163,9 @@ function companyUpdatePayload(data: ImportCompanyInput) {
     audit_findings: data.audit_findings ?? undefined,
     audit_impact: data.audit_impact ?? undefined,
     audit_pdf_name: data.audit_pdf_name ?? undefined,
+    audit_pdf_path: data.audit_pdf_path ?? undefined,
+    mail_subject: data.mail_subject ?? undefined,
+    mail_body: data.mail_body ?? undefined,
     audit_status: data.audit_status ?? undefined,
   };
 }

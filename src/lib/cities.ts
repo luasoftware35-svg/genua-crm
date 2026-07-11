@@ -22,6 +22,7 @@ export const OSB_CITY_BY_SOURCE: Record<string, string> = {
   SOSB: "Sakarya",
   BOSB: "Bursa",
   DOSB: "Denizli",
+  UOSB: "Uşak",
 };
 
 export function inferSourceFromFilename(filename: string): string | null {
@@ -29,6 +30,7 @@ export function inferSourceFromFilename(filename: string): string | null {
   if (f.includes("sosb")) return "SOSB";
   if (f.includes("bosb")) return "BOSB";
   if (f.includes("dosb")) return "DOSB";
+  if (f.includes("uosb") || f.includes("usak") || f.includes("uşak")) return "UOSB";
   return null;
 }
 
@@ -41,6 +43,7 @@ export function inferCityFromImport(input: {
     if (/\bsakarya\b/i.test(input.text)) return "Sakarya";
     if (/\bbursa\b/i.test(input.text)) return "Bursa";
     if (/\bdenizli\b/i.test(input.text)) return "Denizli";
+    if (/\buşak\b/i.test(input.text) || /\busak\b/i.test(input.text)) return "Uşak";
   }
 
   const source =

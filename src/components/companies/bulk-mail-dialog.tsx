@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { buildOutreachMailContent } from "@/lib/mail-templates";
+import { buildCompanyMailContent } from "@/lib/company-mail";
+import { getOutreachMailTemplate } from "@/lib/outreach-templates";
 import { resolveCompanyEmail } from "@/lib/mail-recipients";
 import { useCrm } from "@/context/crm-context";
 
@@ -27,6 +28,10 @@ export type BulkMailTarget = {
   source?: string | null;
   auditFindings?: string | null;
   auditImpact?: string | null;
+  mailSubject?: string | null;
+  mailBody?: string | null;
+  auditPdfName?: string | null;
+  mailDnsOk?: boolean;
 };
 
 type BulkMailDialogProps = {
@@ -52,6 +57,7 @@ export function BulkMailDialog({
   const [error, setError] = useState<string | null>(null);
   const [signatureText, setSignatureText] = useState("");
   const [signatureLogoUrl, setSignatureLogoUrl] = useState<string | null>(null);
+  const [previewIsCustom, setPreviewIsCustom] = useState(false);
 
   const sendable = useMemo(
     () => targets.filter((t) => t.to),
@@ -88,15 +94,19 @@ export function BulkMailDialog({
 
   useEffect(() => {
     if (!open || !previewTarget) return;
-    const content = buildOutreachMailContent({
+    const content = buildCompanyMailContent({
       companyName: previewTarget.companyName,
       website: previewTarget.website,
       source: previewTarget.source,
       auditFindings: previewTarget.auditFindings,
       auditImpact: previewTarget.auditImpact,
+      mailSubject: previewTarget.mailSubject,
+      mailBody: previewTarget.mailBody,
+      auditPdfName: previewTarget.auditPdfName,
     });
     setSubject(content.subject);
     setBody(content.bodyText);
+    setPreviewIsCustom(content.isCustom);
     setPreviewCompanyId(previewTarget.companyId);
   }, [open, previewTarget?.companyId]);
 
@@ -107,29 +117,28 @@ export function BulkMailDialog({
 
     try {
       const messages = sendable.map((target) => {
-        if (sendable.length === 1) {
-          return {
-            companyId: target.companyId,
-            to: target.to!,
-            subject: subject.trim(),
-            text: body.trim(),
-          };
-        }
-
-        const content = buildOutreachMailContent({
+        const content = buildCompanyMailContent({
           companyName: target.companyName,
           website: target.website,
           source: target.source,
           auditFindings: target.auditFindings,
           auditImpact: target.auditImpact,
+          mailSubject: target.mailSubject,
+          mailBody: target.mailBody,
+          auditPdfName: target.auditPdfName,
         });
+
+        const edited =
+          sendable.length === 1 &&
+          (subject.trim() !== content.subject || body.trim() !== content.bodyText);
 
         return {
           companyId: target.companyId,
           to: target.to!,
-          subject: content.subject,
-          text: content.bodyText,
+          subject: sendable.length === 1 ? subject.trim() : content.subject,
+          text: sendable.length === 1 ? body.trim() : content.bodyText,
           html: content.bodyHtml,
+          skipTemplate: edited,
         };
       });
 
@@ -208,6 +217,13 @@ export function BulkMailDialog({
             <Input value={fromLabel} readOnly />
           </div>
 
+          {sendable.length === 1 && previewIsCustom && (
+            <p className="text-xs text-muted-foreground">
+              Firma için hazırlanmış özel mail metni kullanılıyor.
+              {previewTarget.auditPdfName ? ` PDF eki: ${previewTarget.auditPdfName}` : ""}
+            </p>
+          )}
+
           {sendable.length > 1 && (
             <div className="space-y-2">
               <Label>Önizleme firması</Label>
@@ -219,15 +235,19 @@ export function BulkMailDialog({
                     className="cursor-pointer"
                     onClick={() => {
                       setPreviewCompanyId(t.companyId);
-                      const content = buildOutreachMailContent({
+                      const content = buildCompanyMailContent({
                         companyName: t.companyName,
                         website: t.website,
                         source: t.source,
                         auditFindings: t.auditFindings,
                         auditImpact: t.auditImpact,
+                        mailSubject: t.mailSubject,
+                        mailBody: t.mailBody,
+                        auditPdfName: t.auditPdfName,
                       });
                       setSubject(content.subject);
                       setBody(content.bodyText);
+                      setPreviewIsCustom(content.isCustom);
                     }}
                   >
                     {t.companyName}
@@ -238,7 +258,12 @@ export function BulkMailDialog({
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Konu ve gövde şablondur; her firmaya adı ve denetim bulguları otomatik işlenir.
+                {previewIsCustom
+                  ? "Firma için hazırlanmış özel mail metni kullanılıyor."
+                  : "Konu ve gövde şablondur; her firmaya adı ve denetim bulguları otomatik işlenir."}
+                {previewTarget.auditPdfName
+                  ? ` PDF eki: ${previewTarget.auditPdfName}`
+                  : ""}
               </p>
             </div>
           )}
@@ -280,6 +305,14 @@ export function BulkMailDialog({
                   </pre>
                 )}
               </div>
+            </div>
+          )}
+
+          {previewTarget && previewTarget.mailDnsOk === false && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+              <strong>Dikkat:</strong> Dosyadaki e-posta adresi ({previewTarget.to}) DNS&apos;te
+              bulunamadı — mail gönderilirse geri döner (bounce). Adresi dosyada düzeltmeden
+              göndermeyin.
             </div>
           )}
 
@@ -338,6 +371,13 @@ export function useBulkMailTargets(
             source: company.source,
             auditFindings: company.audit_findings,
             auditImpact: company.audit_impact,
+            mailSubject: company.mail_subject,
+            mailBody: company.mail_body,
+            auditPdfName: company.audit_pdf_name,
+            mailDnsOk: getOutreachMailTemplate({
+              companyName: company.name,
+              auditPdfName: company.audit_pdf_name,
+            })?.dnsOk,
           } satisfies BulkMailTarget;
         })
         .filter(Boolean) as BulkMailTarget[],

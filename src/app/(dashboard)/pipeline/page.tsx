@@ -6,7 +6,7 @@ export default function PipelinePage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Pipeline</h1>
         <p className="text-muted-foreground">
-          Kartları sürükleyerek aşama değiştirin
+          Aktif kampanyalarınızı aşamalara göre takip edin; kartları sürükleyerek güncelleyin
         </p>
       </div>
       <PipelineClient />

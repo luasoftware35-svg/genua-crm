@@ -15,6 +15,9 @@ export type ImportCompanyInput = {
   audit_findings?: string | null;
   audit_impact?: string | null;
   audit_pdf_name?: string | null;
+  audit_pdf_path?: string | null;
+  mail_subject?: string | null;
+  mail_body?: string | null;
   audit_status?: AuditStatus | null;
 };
 
@@ -51,6 +54,9 @@ function buildCompany(data: ImportCompanyInput): Company {
     audit_findings: data.audit_findings ?? null,
     audit_impact: data.audit_impact ?? null,
     audit_pdf_name: data.audit_pdf_name ?? null,
+    audit_pdf_path: data.audit_pdf_path ?? null,
+    mail_subject: data.mail_subject ?? null,
+    mail_body: data.mail_body ?? null,
     created_at: now,
   };
 }
@@ -108,6 +114,9 @@ export function bulkUpsertCompanies(
         audit_findings: item.audit_findings ?? companies[idx].audit_findings,
         audit_impact: item.audit_impact ?? companies[idx].audit_impact,
         audit_pdf_name: item.audit_pdf_name ?? companies[idx].audit_pdf_name,
+        audit_pdf_path: item.audit_pdf_path ?? companies[idx].audit_pdf_path,
+        mail_subject: item.mail_subject ?? companies[idx].mail_subject,
+        mail_body: item.mail_body ?? companies[idx].mail_body,
         audit_status: item.audit_status ?? companies[idx].audit_status,
       };
       updated++;

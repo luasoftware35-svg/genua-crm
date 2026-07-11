@@ -52,6 +52,9 @@ type UpdateCompanyInput = Partial<
     | "audit_findings"
     | "audit_impact"
     | "audit_pdf_name"
+    | "audit_pdf_path"
+    | "mail_subject"
+    | "mail_body"
     | "member_no"
   >
 >;
@@ -310,6 +313,9 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         audit_findings: data.audit_findings ?? null,
         audit_impact: data.audit_impact ?? null,
         audit_pdf_name: data.audit_pdf_name ?? null,
+        audit_pdf_path: data.audit_pdf_path ?? null,
+        mail_subject: data.mail_subject ?? null,
+        mail_body: data.mail_body ?? null,
         created_at: now,
       };
       const deal: Deal = {

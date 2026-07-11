@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DEAL_STAGES } from "@/lib/constants";
-import { useCrm } from "@/context/crm-context";
+import type { Company } from "@/types";
 
 const CHART_COLORS = [
   "var(--chart-1)",
@@ -23,15 +23,28 @@ const CHART_COLORS = [
   "var(--chart-5)",
 ];
 
-export function SourceChart() {
-  const { getSourceBreakdown } = useCrm();
-  const data = getSourceBreakdown();
+type SourceChartProps = {
+  companies: Company[];
+};
+
+export function SourceChart({ companies }: SourceChartProps) {
+  const counts: Record<string, number> = {};
+  for (const company of companies) {
+    const key =
+      company.sector === "OSB Yönetimi"
+        ? "OSB Teklif"
+        : company.source === "UOSB"
+          ? "Uşak OSB"
+          : company.source ?? "Diğer";
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+  const data = Object.entries(counts).map(([name, value]) => ({ name, value }));
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Kaynak Dağılımı</CardTitle>
-        <CardDescription>Firmaların OSB kaynağına göre kırılımı</CardDescription>
+        <CardTitle>Kampanya Dağılımı</CardTitle>
+        <CardDescription>Aktif kampanyalardaki kayıt sayıları</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={240}>
@@ -70,9 +83,11 @@ export function SourceChart() {
   );
 }
 
-export function PipelineChart() {
-  const { getPipelineBreakdown } = useCrm();
-  const breakdown = getPipelineBreakdown();
+type PipelineChartProps = {
+  breakdown: Record<string, number>;
+};
+
+export function PipelineChart({ breakdown }: PipelineChartProps) {
   const data = DEAL_STAGES.map((stage) => ({
     name: stage.label,
     count: breakdown[stage.value] ?? 0,
@@ -82,7 +97,7 @@ export function PipelineChart() {
     <Card>
       <CardHeader>
         <CardTitle>Pipeline Aşamaları</CardTitle>
-        <CardDescription>Satış hunisindeki firma sayıları</CardDescription>
+        <CardDescription>Aktif kampanyalardaki aşama dağılımı</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={240}>

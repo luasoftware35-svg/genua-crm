@@ -10,10 +10,17 @@ import { Button } from "@/components/ui/button";
 import { getStageLabel } from "@/lib/constants";
 import { useCrm } from "@/context/crm-context";
 import { cn } from "@/lib/utils";
+import type { Company } from "@/types";
 
-export function TodayFollowUps() {
+type TodayFollowUpsProps = {
+  companyFilter?: (company: Company) => boolean;
+};
+
+export function TodayFollowUps({ companyFilter }: TodayFollowUpsProps) {
   const { getTodayFollowUps } = useCrm();
-  const followUps = getTodayFollowUps();
+  const followUps = getTodayFollowUps().filter(({ company }) =>
+    companyFilter ? companyFilter(company) : true
+  );
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
   return (

@@ -5,7 +5,6 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPackageLabel, getStageLabel } from "@/lib/constants";
-import { useCrm } from "@/context/crm-context";
 import type { Company, Deal, DealStage } from "@/types";
 
 function DealCard({ deal, company }: { deal: Deal; company: Company }) {
@@ -17,15 +16,31 @@ function DealCard({ deal, company }: { deal: Deal; company: Company }) {
     ? { transform: `translate(${transform.x}px, ${transform.y}px)`, opacity: isDragging ? 0.4 : 1 }
     : undefined;
 
+  const meta = [company.city, company.source].filter(Boolean).join(" · ");
+
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <Card className="cursor-grab active:cursor-grabbing transition-colors hover:bg-accent">
+      <Card className="cursor-grab transition-colors hover:bg-accent active:cursor-grabbing">
         <Link href={`/companies/${company.id}`} onClick={(e) => isDragging && e.preventDefault()}>
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-sm leading-tight">{company.name}</CardTitle>
-            <CardDescription className="text-xs">{company.sector ?? "—"}</CardDescription>
+          <CardHeader className="space-y-2 p-4 pb-2">
+            <div className="flex flex-wrap items-start gap-2">
+              <CardTitle className="flex-1 text-sm leading-tight">{company.name}</CardTitle>
+              {company.sector === "OSB Yönetimi" && (
+                <Badge variant="outline" className="shrink-0 text-[10px]">
+                  OSB Teklif
+                </Badge>
+              )}
+            </div>
+            <CardDescription className="text-xs">
+              {company.sector && company.sector !== "OSB Yönetimi"
+                ? company.sector
+                : meta || "—"}
+            </CardDescription>
           </CardHeader>
-          <CardContent className="p-4 pt-0 space-y-1">
+          <CardContent className="space-y-1 p-4 pt-0">
+            {meta && company.sector && company.sector !== "OSB Yönetimi" && (
+              <p className="text-xs text-muted-foreground">{meta}</p>
+            )}
             {deal.estimated_value && (
               <p className="text-sm font-medium">
                 ₺{deal.estimated_value.toLocaleString("tr-TR")}
@@ -59,19 +74,24 @@ function KanbanColumn({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
 
+  const sortedDeals = [...deals].sort(
+    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
+
   return (
-    <div className="min-w-[260px] flex-shrink-0">
+    <div className="flex w-[280px] flex-shrink-0 flex-col">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="font-semibold">{label}</h3>
         <Badge variant="secondary">{deals.length}</Badge>
       </div>
       <div
         ref={setNodeRef}
-        className={`min-h-[120px] space-y-2 rounded-lg p-2 transition-colors ${
+        className={`min-h-[160px] flex-1 space-y-2 overflow-y-auto rounded-lg p-2 transition-colors ${
           isOver ? "bg-accent/50 ring-2 ring-primary/20" : "bg-muted/30"
         }`}
+        style={{ maxHeight: "calc(100vh - 320px)" }}
       >
-        {deals.map((deal) => {
+        {sortedDeals.map((deal) => {
           const company = companies.find((c) => c.id === deal.company_id);
           if (!company) return null;
           return <DealCard key={deal.id} deal={deal} company={company} />;
@@ -86,8 +106,12 @@ function KanbanColumn({
   );
 }
 
-export function KanbanBoard() {
-  const { deals, companies } = useCrm();
+type KanbanBoardProps = {
+  deals: Deal[];
+  companies: Company[];
+};
+
+export function KanbanBoard({ deals, companies }: KanbanBoardProps) {
   const activeStages = [
     "yeni",
     "mail_atildi",
@@ -112,7 +136,7 @@ export function KanbanBoard() {
       </div>
       <div>
         <h3 className="mb-3 font-semibold text-muted-foreground">Kapanan</h3>
-        <div className="flex gap-4 overflow-x-auto">
+        <div className="flex gap-4 overflow-x-auto pb-2">
           {closedStages.map((stage) => (
             <KanbanColumn
               key={stage}
